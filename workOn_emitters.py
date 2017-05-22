@@ -77,20 +77,15 @@ print '\nInitial candidates: ', len(jpl['coords'][:,0])
 
 #-------------- BB SIGNAL-to-NOISE SELECTION  --------------#
 mcutR = tools.jplus_SNratio(jpl, mask=[], band='rJAVA', SNcut=3.)
-mcutU = tools.jplus_SNratio(jpl, mask=[], band='uJAVA', SNcut=3.) #something strange happens
-mcutU = 20.15
 mcutG = tools.jplus_SNratio(jpl, mask=[], band='gJAVA', SNcut=3.)
 
 SNcutR_mask = (jpl['rJAVA'][:,0] < mcutR)
 jpl['over_rJAVA_cut'] = SNcutR_mask
 
-SNcutU_mask = (jpl['uJAVA'][:,0] < mcutU)
-jpl['over_uJAVA_cut'] = SNcutU_mask
-
 SNcutG_mask = (jpl['gJAVA'][:,0] < mcutG)
 jpl['over_gJAVA_cut'] = SNcutG_mask
 
-jpl['over_all_SNcuts'] = ((SNcutR_mask) & (SNcutU_mask) & (SNcutG_mask))
+jpl['over_all_SNcuts'] = ((SNcutR_mask) & (SNcutG_mask))
 
 
 #---------------  REDSHIFT ESTIMATE and SELECTION  --------------------#

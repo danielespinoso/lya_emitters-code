@@ -17,12 +17,17 @@ def jplus_reader(out_name):
     if not os.path.exists(out_name):
         sys.path.append(setup['jplus_code'])
         import jplus
+        from jplus.datasets import fetch_jplus_objects as fetch
     
         #----------------------------  (DOWN)LOADING JPLUS  ---------------------------#
-        jpl = jplus.datasets.fetch_jplus_objects(db='upad', mag_type="autoMags", mag_limit=[0,24],\
-                                                 cstar_query=" ", object_name='alltoR24',\
-                                                 overwrite=False, dualMode=True,filter_name="rJAVA",\
-                                                 nchunks=20, extra_where_conds='')
+        if setup['mag_type'] == 'auto':
+            jpl = fetch(db='upad', mag_type="autoMags", mag_limit=[0,24], cstar_query=" ",\
+                        object_name='alltoR24', overwrite=False, dualMode=True,filter_name="rJAVA",\
+                        nchunks=20, extra_where_conds='')
+        elif setup['mag_type'] == 'aper':
+            jpl = fetch(db='upad', mag_type="aperMags", mag_limit=[0,60], cstar_query=" ",\
+                        object_name='alltoR60', overwrite=False, dualMode=True,filter_name="rJAVA",\
+                        nchunks=20, extra_where_conds='')
         #---------------------------  CLEANING JPLUS  --------------------------------#
         for ifilter in jplus.datasets.jplus_filter_names():
             ind = np.isfinite(jpl[ifilter][:,0]) #cleaning NaNs
@@ -87,10 +92,13 @@ def jplus_reader(out_name):
             'flag_J0861':jpl['flag_J0861'][mask_js],
             'flag_zJAVA':jpl['flag_zJAVA'][mask_js],
             'fwhm':jpl['fwhm'][mask_js],
-            'KronRad':jpl['kron_rad'][mask_js],
+            'KronRad':jpl['kron_rad'][mask_js],           
             'PetroRad':jpl['petro_rad'][mask_js],
             'mu_max_r':jpl['mu_max_r'][mask_js]
         }
+        if setup['mag_type'] == 'aper':
+            new_data['mag_auto_r'] = jpl['mag_auto_r'][mask_js]
+            
         tsi.update_print('working on datasets...   saving  final  catalogue', appendix=' ')  
         dd.io.save(out_name, new_data)
         tsi.update_print('working on datasets...                           ', appendix='done')

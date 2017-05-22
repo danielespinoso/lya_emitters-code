@@ -32,8 +32,6 @@ from jplus.tools import crossmatch_angular as ang_xmatch
 #                                                     #
 #######################################################
 first_jpl = tools.data_reader.jplus_reader(setup['jplus_input'])
-
-#if setup['load_mock_in'] == True:
     
 if setup['load_sdssGal'] == True:
     uPrint('loading sdss galaxies... ', appendix=' ')
@@ -105,6 +103,8 @@ elif (setup['method'] == '2FM'):
     
     
 #-------------  CROSS-MATCHES  ------------#
+#-- I need this section for tile-by-tile --#
+#--    plots in the following analysis   --#
 uPrint('working on jplus data: cross-matching...', appendix=' ')
 
 # SDSS GALAXIES
