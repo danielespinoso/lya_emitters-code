@@ -1,0 +1,4 @@
+
+22-03-2017
+
+- I am drammatically over-estimating the error on the continuum with the 3FM, so for the sigma-line computation (see select_emitters.py  and  tools/sigma_line.py) I am using the 2FM instead of the 3FM (basically I am selecting candidates with the 2FM instead of selecting them with the 3FM)
