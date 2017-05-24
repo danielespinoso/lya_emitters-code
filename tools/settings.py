@@ -57,7 +57,7 @@ def set_up():
     setup['Ha_ex'] = 0.5        # H-alpha excess cut in mags (exclude sources with rJAVA-J660 > cut)
 
         
-    setup['mag_type'] = 'aper'   # set 'auto' or 'aper' to select auto-mag or aper-mag(3") catalogue
+    setup['mag_type'] = 'auto'  # set 'auto' or 'aper' to select auto-mag or aper-mag(3") catalogue
     setup['method'] = '2FM'     # method for NB-excess computation (choose '3FM' otherwise)
     setup['sdssPhot'] = False   # if 'True' x-matches jplus-sdss + uses sdss photometry inst. of jplus
     setup['zmask'] = False      # if 'True' only zmin < z < zmax sources will be finally selected
@@ -75,7 +75,7 @@ def set_up():
                                'jplus_alltoR24_autoMags_upad_dual_sdssPhot_sdssMatched.h5'
     else:
         if setup['mag_type'] == 'aper':
-            setup['jplus_input'] = setup['data'] + 'jplus_alltoR60_aperMags_upad_dual.h5'
+            setup['jplus_input'] = setup['data'] + 'jplus_alltoR24_aperMags_upad_dual.h5'
         elif setup['mag_type'] == 'auto':
             setup['jplus_input'] = setup['data'] + 'jplus_alltoR24_autoMags_upad_dual_jplusPhot.h5'
     

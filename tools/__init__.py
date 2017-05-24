@@ -15,3 +15,5 @@ from .find_NBand_excess import *
 from .plot_qso_lines import *
 from .plot_workON_quasars import *
 from .plot_by_tile import *
+from .source_morphology import *
+from .linear_fit import *

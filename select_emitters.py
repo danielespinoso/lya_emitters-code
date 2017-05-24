@@ -31,8 +31,9 @@ from jplus.tools import crossmatch_angular as ang_xmatch
 #   MORE DETAILS IN '-->/code/datasets/README.txt'    #
 #                                                     #
 #######################################################
+
 first_jpl = tools.data_reader.jplus_reader(setup['jplus_input'])
-    
+
 if setup['load_sdssGal'] == True:
     uPrint('loading sdss galaxies... ', appendix=' ')
     sdss_gal = dd.io.load(setup['sdss_gal'])  #load sdss galaxies catalogue
@@ -83,7 +84,7 @@ else:
 
 uPrint('working on jplus data... ', appendix=' ')
 
-#-------------  INITIAL MASK and NARROW BAND EXCESS COMPUTATION  ------------#
+#-------------  INITIAL MAG MASK  ------------#
 mag_mask =  ((first_jpl[filt[0]][:,0] > 0) & \
              (first_jpl[filt[1]][:,0] > 0) & \
              (first_jpl[filt[2]][:,0] > 0) & \
@@ -91,6 +92,8 @@ mag_mask =  ((first_jpl[filt[0]][:,0] > 0) & \
 
 jpl = jplus.tools.select_object(first_jpl, mag_mask)
 
+
+#--------  NARROW BAND EXCESS COMPUTATION  -------#
 if (setup['method'] == '3FM'):
     fline, fcont, flux_nb, fcont_error = tools.threeFM.jplus3FM(jpl)
     mag_cont, mag_cont_error = FtoM(fcont, band=filt[0], dflux=fcont_error)
@@ -100,8 +103,13 @@ elif (setup['method'] == '2FM'):
     mag_cont_error = jpl[filt[1]][:,1]
     mag_color = jpl[filt[1]][:,0] - jpl[filt[0]][:,0]
 
+
+#-------  EXTENDED-NESS PARAMETER COMPUTATION  ------#
+pxl = 0.55*0.55  # jplus pixel area in arcsec^2
+mumax = jpl['mu_max_r'][:] - 2.5*np.log10(pxl)
+extdness = mumax - jpl['rJAVA'][:,0]
     
-    
+'''    
 #-------------  CROSS-MATCHES  ------------#
 #-- I need this section for tile-by-tile --#
 #--    plots in the following analysis   --#
@@ -130,7 +138,7 @@ if setup['load_gaia'] == True:
     mask_jg = (djg != np.inf)
 else:
     mask_jg = np.ones(len(jpl['coords'][:,0]), dtype=bool)
-
+'''
 
     
 
@@ -143,7 +151,9 @@ jp_morph = []; sdss_morph = []; qso_morph = []; qso_morph_z = []; gaia_morph = [
 for i in set(jpl['tile_id']):
     uPrint('working on jplus data tile by tile... now: ',appendix=str(int(i)))
     tilemask = (jpl['tile_id'] == i)
-    # if (i != 2525):# and (i != 3314):
+    # if (i != 2521):
+    #    continue
+    # if (i == 2848) or (i == 4782) or (i == 2519) or (i == 2521):# and (i != 3314):
     #    continue
 
     #-----------  JPLUS SIGMA LINE  -----------#
@@ -173,11 +183,15 @@ for i in set(jpl['tile_id']):
         color_SNmask = np.ones(len(jpl[filt[1]][:,0]), dtype=bool)
 
     #-------------- SOURCE EXTENT  --------------#
-    mask_mag_tile = ((jpl['rJAVA'][tilemask,0] > 14.) &(jpl['rJAVA'][tilemask,0] < 16.))
+    tools.evaluate_morphology(jpl, extdness, tilemask, i)
+    #sys.exit()
     
-    pxl = 0.55*0.55  # jplus pixel area in arcsec^2
-    mumax = jpl['mu_max_r'][tilemask] - 2.5*np.log10(pxl)
-    extdness = mumax - jpl['rJAVA'][tilemask,0]
+    '''
+    # mask_mag_tile = ((jpl['rJAVA'][tilemask,0] > 14.) & (jpl['rJAVA'][tilemask,0] < 16.))
+    
+    # pxl = 0.55*0.55  # jplus pixel area in arcsec^2
+    # mumax = jpl['mu_max_r'][tilemask] - 2.5*np.log10(pxl)
+    # extdness = mumax - jpl['rJAVA'][tilemask,0]
 
     avg_ext = np.mean(extdness[mask_mag_tile])
     lim_ext = avg_ext + 0.18 #EXTREMELY UNACCURATE!!!! I think I should construct a function that
@@ -235,6 +249,10 @@ for i in set(jpl['tile_id']):
         gaia_morph.extend(morpho_pdf[mask_gaia])
 
     qso_in_g = ((mask_jg) & (mask_jq) & (tilemask)) #QSOs in Gaia
+
+    '''
+print '\n'
+sys.exit()
 
 if setup['morpHisto_plot'] == True:
     tools.plot_JPLUS_results.morpHisto(jp_morph, sdss_morph, qso_morph_z, gaia_morph)

@@ -25,8 +25,8 @@ def jplus_reader(out_name):
                         object_name='alltoR24', overwrite=False, dualMode=True,filter_name="rJAVA",\
                         nchunks=20, extra_where_conds='')
         elif setup['mag_type'] == 'aper':
-            jpl = fetch(db='upad', mag_type="aperMags", mag_limit=[0,60], cstar_query=" ",\
-                        object_name='alltoR60', overwrite=False, dualMode=True,filter_name="rJAVA",\
+            jpl = fetch(db='upad', mag_type="aperMags", mag_limit=[0,24], cstar_query=" ",\
+                        object_name='alltoR24', overwrite=True, dualMode=True,filter_name="rJAVA",\
                         nchunks=20, extra_where_conds='')
         #---------------------------  CLEANING JPLUS  --------------------------------#
         for ifilter in jplus.datasets.jplus_filter_names():
