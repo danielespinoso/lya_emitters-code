@@ -8,7 +8,7 @@ setup = tools.settings.set_up()
 
 
 #computes N-sigma error lines for color-magnitude diagrams
-def sigmaline(cont, NB, sigma=setup['sigma'], magbin=setup['mbin'], maglim=setup['ml']):
+def sigmaline(cont, NB, sigma=setup['sigma'], magbin=setup['mbin'], maglim=setup['ml'], show_plt=False):
     pcent = {
         1 : 68.27,
         2 : 95.45,
@@ -32,7 +32,7 @@ def sigmaline(cont, NB, sigma=setup['sigma'], magbin=setup['mbin'], maglim=setup
     for k in magarr:
         idg = ((NB[mask,0] >= k) & (NB[mask,0] < k+magbin) &\
                (color > avg-setup['width']) & (color < avg+setup['width']))
-        i_err = phot_err[idg]
+        i_err = phot_err[idg] #error of the points selected by the mask
         if len(i_err) < 3:
             sigma_line[cc] = avg
         else:
@@ -41,19 +41,15 @@ def sigmaline(cont, NB, sigma=setup['sigma'], magbin=setup['mbin'], maglim=setup
 
     sigma_line = interp1d(magarr,sigma_line,kind='linear',bounds_error=None,fill_value='extrapolate')
 
-    # import sys
-    # violet = (0.6, 0.0, 0.6)
-    # plt.plot(NB[mask,0], color, 'og', alpha=0.3, markersize=4)
-    # plt.plot(magarr, sigma_line(magarr), '-', c=violet, linewidth=2)
-    # plt.plot( (14.,24.), (avg, avg), 'r--')
-    # plt.axis([13.5, 24.5, -5., 10.])
-    # plt.show()
-    # plt.close()
-
-    # plt.hist(NB[mask,1], alpha=0.3, color='b', range=(0,15), bins=150)
-    # plt.hist(cont[mask,1], alpha=0.6, color='R', range=(0,15), bins=150)
-    # plt.show()
-    # plt.close()
+    if show_plt == True:
+        # FAST PLOT TO SHOW THE ALGORITHM PERFORMANCE
+        violet = (0.6, 0.0, 0.6)
+        plt.plot(NB[mask,0], color, 'og', alpha=0.3, markersize=4)
+        plt.plot(magarr, sigma_line(magarr), '-', c=violet, linewidth=2)
+        plt.plot( (14.,24.), (avg, avg), 'r--')
+        plt.axis([13.5, 24.5, -5., 10.])
+        plt.show()
+        plt.close()
     
     return sigma_line
 

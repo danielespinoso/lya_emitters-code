@@ -1,5 +1,4 @@
 
-
 import os
 import numpy as np
 from . import zl
@@ -45,8 +44,7 @@ def set_up():
     setup['SNmbin'] = 0.2      # magnitude bin for SNratio computation
     setup['marr'] = np.arange(setup['ml'][0], setup['ml'][1], 0.25)  # array of magnitudes
     setup['sigma'] = 3.         # sigmas for NB-excess confidence (see sigma_line.py routine)
-    setup['SN'] = 3.            # Signal-to-Noise to determine the NB magnitude cut
-    setup['colorSN'] = 3.       # Signal-to-Noise on colors (initial selection in select_emitters.py)
+    setup['SN'] = 3.            # Signal-to-Noise to determine the NB magnitude cut (and S/N cut on BB filters in workOn_emitters.py)
     setup['line_ex_sigma'] = 2. # sigmas for line-excess in other NBands (see workOn_Emitters.py)
     if setup['filters'][0] == 'J0395':
         setup['width'] = 1.5    # width for NB-excess confidence (see sigma_line.py routine)
@@ -55,76 +53,84 @@ def set_up():
         setup['width'] = 1.     # width for NB-excess confidence (see sigma_line.py routine)
         setup['cCut'] = 0.5     # color cut for color-color diagram selection
     setup['Ha_ex'] = 0.5        # H-alpha excess cut in mags (exclude sources with rJAVA-J660 > cut)
+    setup['morph_fact'] = 2.    # factor to multiply the error-fit and set the morphological limit
 
         
-    setup['mag_type'] = 'auto'  # set 'auto' or 'aper' to select auto-mag or aper-mag(3") catalogue
+    setup['mag_type'] = 'aper'  # set 'auto' or 'aper' to select auto-mag or aper-mag(3") catalogue
+    setup['jpl_overwr'] = False # if 'True' the jplus catalogue gets downloaded again from jplus website (my catalogue in lya_emitters/datasets/ gets also overwritten). Set to True after UPAD updates
+    setup['my_overwr'] = False   # if 'True' the jplus input catalogue in lya_emitters/datasets/ gets overwritten
     setup['method'] = '2FM'     # method for NB-excess computation (choose '3FM' otherwise)
-    setup['sdssPhot'] = False   # if 'True' x-matches jplus-sdss + uses sdss photometry inst. of jplus
-    setup['zmask'] = False      # if 'True' only zmin < z < zmax sources will be finally selected
+    setup['sdssPhot'] = False   # if 'True' data_reader.py (called from select_emitters.py) x-matches jplus with sdss and substitutes sdss photometry to jplus' one
     setup['galexmask'] = False  # if 'True' only sources NOT in galex will be finally selected
-    setup['col_SNcut'] = False  # if 'True' activates the color-SN cut on data (select_emitters.py)
 
         
-    #-------------------------------------------#
-    #---------- INPUT DATASETS NAMES  ----------#
-    #-------------------------------------------#
+
+    #-------------------------------------------------#
+    #---------- JPLUS INPUT DATASETS NAMES  ----------#
+    #-------------------------------------------------#
     
     # JPLUS INPUTS - first jplus catalogue as formatted by datasets/data_reader.py
     if setup['sdssPhot'] == True:
         setup['jplus_input'] = setup['data'] +\
-                               'jplus_alltoR24_autoMags_upad_dual_sdssPhot_sdssMatched.h5'
+                               'jplus_allTOr24_autoMags_upad_dual_sdssPhot_sdssMatched.h5'
     else:
         if setup['mag_type'] == 'aper':
-            setup['jplus_input'] = setup['data'] + 'jplus_alltoR24_aperMags_upad_dual.h5'
+            setup['jplus_input'] = setup['data'] + 'jplus_allTOr24_aperMags_upad_dual.h5'
         elif setup['mag_type'] == 'auto':
-            setup['jplus_input'] = setup['data'] + 'jplus_alltoR24_autoMags_upad_dual_jplusPhot.h5'
+            setup['jplus_input'] = setup['data'] + 'jplus_allTOr24_autoMags_upad_dual.h5'
     
-    # JPLUS CANDIDATES - binary files on which 'workON_emitters.py' operates
+    # JPLUS CANDIDATES - binary files produced by select_emitters.py on which 'workON_emitters.py' operates
     if setup['mag_type'] == 'aper':
-        setup['jplus_candidates'] = setup['data']+'candidates_jplus_aperMag_'+setup['filters'][0]+\
-                                    '_'+setup['method']+'.h5'
+        setup['jplus_candidates'] = setup['data']+'candidates_jplus_'+setup['filters'][0]+'aperMag_'+setup['method']+'.h5'
     elif setup['mag_type'] == 'auto':
-        setup['jplus_candidates'] = setup['data']+'candidates_jplus_autoMag_'+setup['filters'][0]+\
-                                    '_'+setup['method']+'.h5'
-    
-    # SDSS INPUTS - as downloaded from CasJobs
-    setup['sdss_allphot'] = setup['data'] + 'sdss_photgalaxies_aperMags.h5'  # all sdss photometry
-    setup['sdss_gal'] = setup['data'] + 'sdss_galaxies_aperMags.h5'          # all sdss galaxies
-    setup['sdss_qso'] = setup['home'] + 'jplus_data/sdss_qso_aperMags.h5'    # all sdss quasars
-    
-    # LQAC INPUT - Large Astrometric Quasar Catalogue
-    setup['lqac'] = setup['data'] + 'lqac/lqac3.h5'
-    
-    # GAIA INPUT - only in jplus footprint
-    setup['gaia'] = setup['data'] + 'gaia_jpFoot.h5'
+        setup['jplus_candidates'] = setup['data']+'candidates_jplus_'+setup['filters'][0]+'autoMag_'+setup['method']+'.h5'
 
-    # GALEX INPUT - as downloaded from CasJobs (I selected magnitude fields a bit "by chance")
-    setup['galex_in'] = setup['data']+'galex_photoObjs_autoMags.h5'
+    
+
+    #---------------------------------------------------------------#
+    #-----------  CHOOSE WHETHER TO LOAD OTHER DATASETS  -----------#
+    #---------------------------------------------------------------#
+    setup['load_mock_in'] = False      # if 'True' mock complete catalog gets loaded (select_emitters.py)
+    setup['load_mock_cd'] = False      # if 'True' mock candidates get loaded (workOn_emitters.py)
+    setup['load_gaia'] = False         # if 'True' gaia stars get loaded (for morphology analysis)
+    setup['load_lqac'] = True          # if 'True' LQAC quasars get loaded (for crossmatch)
+    setup['load_rafa'] = True          # if 'True' Rafa's HII regions get loaded (for crossmatch)
+    
+    setup['load_sdssGal'] = False       # if 'True' sdss galaxies catalogue gets loaded (everywhere)
+    setup['load_sdssQSO'] = False       # if 'True' sdss quasars catalogue gets loaded (everywhere)
+    setup['load_sdssSTAR'] = False      # if 'True' sdss stars catalogue gets loaded (everywhere)
+
+
+        
+    #-------------------------------------------#
+    #---------- OTHER DATASETS NAMES  ----------#
+    #-------------------------------------------#
 
     # MOCK INPUT - first mock catalogue as formatted by datasets/data_reader.py
     setup['mock_input'] = setup['data']+'jplus_mocks_lines_allfilt_'+\
                           setup['filters'][0]+'emitters_linexcess.h5'
     setup['mock_candidates'] = setup['data'] + 'candidates_mocks_'+setup['filters'][0]+'_zSelected.h5'
-
-    # TILE_IMAGE INFO INPUT
-    setup['img_input'] = setup['data']+'jplus_tile_image_(03-05-2017).h5'
+    
+    # GAIA INPUT - only in jplus footprint
+    setup['gaia'] = setup['data'] + 'gaia_jpFoot.h5'
+    
+    # LQAC INPUT - Large Astrometric Quasar Catalogue
+    setup['lqac'] = setup['data'] + 'lqac/lqac3.h5'
     
     # RAFA INPUT - catalogue of HII regions in all jplus data (by Rafael Logronho)
     setup['rafa'] = setup['data'] + 'rafa_HII.h5'
-
     
+    # SDSS INPUTS - as downloaded from CasJobs
+    setup['sdss_allphot'] = setup['data'] + 'sdss_photgalaxies_aperMags.h5'  # all sdss photometry
+    setup['sdss_gal'] = setup['data'] + 'sdss_galaxies_modelMags.h5'         # sdss galaxies
+    setup['sdss_qso'] = setup['data'] + 'sdss_qso_modelMags.h5'              # sdss quasars
+    setup['sdss_str'] = setup['data'] + 'sdss_stars_modelMags.h5'            # sdss stars
 
-    #------------------------------------------------#
-    #-----------  LOAD ADDITIONAL INPUTS  -----------#
-    #------------------------------------------------#
-    
-    setup['load_sdssGal'] = True  # if 'True' sdss galaxies catalogue gets loaded (everywhere)
-    setup['load_sdssQSO'] = True  # if 'True' sdss quasars catalogue gets loaded (everywhere)
-    setup['load_mock_in'] = False  # if 'True' mock complete catalog gets loaded (select_emitters.py)
-    setup['load_mock_cd'] = False  # if 'True' mock candidates get loaded (workOn_emitters.py)
-    setup['load_gaia'] = False     # if 'True' gaia stars get loaded (for morphology analysis)
-    setup['load_lqac'] = True     # if 'True' gaia stars get loaded (for morphology analysis)
-    setup['load_rafa'] = True     # if 'True' gaia stars get loaded (for morphology analysis)
+    # GALEX INPUT - as downloaded from CasJobs (I selected magnitude fields a bit "by chance")
+    setup['galex_in'] = setup['data']+'galex_photoObjs_autoMags.h5'
+
+    # TILE_IMAGE INFO INPUT
+    setup['img_input'] = setup['data']+'jplus_tile_image_(03-05-2017).h5'
         
 
         
@@ -133,45 +139,19 @@ def set_up():
     #--------------------------------------#
     
     # FINAL CANDIDATES OUTPUTS - ascii tables of selected candidates' parameters
-    if setup['zmask'] == True:
-        if setup['mag_type'] == 'auto':
-            setup['final_catalog'] = setup['results'] + 'candidates_catalog_autoMags_'+\
-                                     setup['filters'][0]+'_'+setup['method']+'_zSelected.h5'
-            setup['flagged_catalog'] = setup['results'] + 'candidates_FLAGcatalog_autoMags_'+\
-                                       setup['filters'][0]+'_'+setup['method']+'_zSelected.h5'
-            setup['final_list'] = setup['results'] + 'candidates_allparams_autoMags_'+\
-                                  setup['filters'][0]+'_'+setup['method']+'_zSelected.txt'
-            setup['final_radec'] = setup['results'] + 'candidates_RaDec_autoMags_'+\
-                                   setup['filters'][0]+'_'+setup['method']+'_zSelected.txt'
-        elif setup['mag_type'] == 'aper':
-            setup['final_catalog'] = setup['results'] + 'candidates_catalog_aperMags_'+\
-                                     setup['filters'][0]+'_'+setup['method']+'_zSelected.h5'
-            setup['flagged_catalog'] = setup['results'] + 'candidates_FLAGcatalog_aperMags_'+\
-                                       setup['filters'][0]+'_'+setup['method']+'_zSelected.h5'
-            setup['final_list'] = setup['results'] + 'candidates_allparams_aperMags_'+\
-                                  setup['filters'][0]+'_'+setup['method']+'_zSelected.txt'
-            setup['final_radec'] = setup['results'] + 'candidates_RaDec_aperMags_'+\
-                                   setup['filters'][0]+'_'+setup['method']+'_zSelected.txt'
-    else:
-        if setup['mag_type'] == 'auto':
-            setup['final_catalog'] = setup['results'] + 'candidates_catalog_autoMags_'+\
-                                     setup['filters'][0]+'_'+setup['method']+'.h5'
-            setup['flagged_catalog'] = setup['results'] + 'candidates_FLAGcatalog_autoMags_'+\
-                                       setup['filters'][0]+'_'+setup['method']+'.h5'
-            setup['final_list'] = setup['results'] + 'candidates_allparams_autoMags_'+\
-                                  setup['filters'][0]+'_'+setup['method']+'.txt'
-            setup['final_radec'] = setup['results'] + 'candidates_RaDec_autoMags_'+\
-                                   setup['filters'][0]+'_'+setup['method']+'.txt'
-        elif setup['mag_type'] == 'aper':
-            setup['final_catalog'] = setup['results'] + 'candidates_catalog_aperMags_'+\
-                                     setup['filters'][0]+'_'+setup['method']+'.h5'
-            setup['flagged_catalog'] = setup['results'] + 'candidates_FLAGcatalog_aperMags_'+\
-                                       setup['filters'][0]+'_'+setup['method']+'.h5'
-            setup['final_list'] = setup['results'] + 'candidates_allparams_aperMags_'+\
-                                  setup['filters'][0]+'_'+setup['method']+'.txt'
-            setup['final_radec'] = setup['results'] + 'candidates_RaDec_aperMags_'+\
-                                   setup['filters'][0]+'_'+setup['method']+'.txt'
-            
+    if setup['mag_type'] == 'auto':
+        setup['final_catalog'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_'+setup['method']+'.h5'
+        setup['flagged_catalog'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_FLAGS_'+setup['method']+'.h5'
+        setup['final_list'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_allpars_'+setup['method']+'.txt'
+        setup['final_radec'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_RaDec_'+setup['method']+'.txt'
+        setup['final_radec_overSN'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_RaDec_overSN'+setup['method']+'.txt'
+    elif setup['mag_type'] == 'aper':
+        setup['final_catalog'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_'+setup['method']+'.h5'
+        setup['flagged_catalog'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_FLAGS_'+setup['method']+'.h5'
+        setup['final_list'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_allpars_'+setup['method']+'.txt'
+        setup['final_radec'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_RaDec_'+setup['method']+'.txt'
+        setup['final_radec_overSN'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_RaDec_overSN'+setup['method']+'.txt'
+        
     # GALEX OUTPUT - list of jplus-galex x-matched sources. 'workON_emitters.py' will exclude them.
     setup['galex_list'] = setup['jplus_candidates'][:(len(setup['jplus_candidates'])-3)] +\
                           '_galexCROSSMATCHEDsources.csv'
@@ -185,13 +165,12 @@ def set_up():
     setup['tile_plot'] = False        # if 'True' activate tile by tile plots (see select_emitters.py)
     setup['morpho_plot'] = False      # if 'True' activate morphology plots (see select_emitters.py)
     setup['cstar_plot'] = False       # if 'True' activate CLASS_STAR plots (see select_emitters.py)
-    setup['morpHisto_plot'] = False   # if 'True' activate morph. histogram (see select_emitters.py)
     
-    setup['plot_sdssGal'] = True      # if 'True' sdss galaxies are plotted in plots (col-col & morph)
+    setup['plot_sdssGal'] = False      # if 'True' sdss galaxies are plotted in plots (col-col & morph)
     if setup['plot_sdssGal'] == True:
         setup['load_sdssGal'] = True  # forces to load the dataset
     
-    setup['plot_sdssQSO'] = True      # if 'True' sdss quasars are plotted in plots (col-col & morph)
+    setup['plot_sdssQSO'] = False      # if 'True' sdss quasars are plotted in plots (col-col & morph)
     if setup['plot_sdssQSO'] == True:
         setup['load_sdssQSO'] = True  # forces to load the dataset
     
@@ -199,7 +178,7 @@ def set_up():
     if setup['plot_mock'] == True:
         setup['load_mock'] = True     # forces to load the dataset
     
-    setup['plot_gaia'] = True        # if 'True' gaia stars are plotted in morphology plot
+    setup['plot_gaia'] = False        # if 'True' gaia stars are plotted in morphology plot
     if setup['plot_gaia'] == True:
         setup['load_gaia'] = True     # forces to load the dataset
         

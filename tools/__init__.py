@@ -11,6 +11,7 @@ from .histo import *
 from .plot_JPLUS_results import *
 from .settings import *
 from .data_reader import *
+from .sdss_reader import *
 from .find_NBand_excess import *
 from .plot_qso_lines import *
 from .plot_workON_quasars import *

@@ -8,8 +8,7 @@ setup = tools.settings.set_up()
 
 # calculator of the mean S/N ratio of a selection
 # of jplus data (given a filter in which to operate)
-def jplus_SNratio(data, mask, band='J0395', SNcut=setup['SN'], magbin=setup['SNmbin'],\
-                  maglim=setup['ml']):
+def jplus_SNratio(data, mask, band='J0395', SNcut=setup['SN'], magbin=setup['SNmbin'], maglim=setup['ml'], show_plt=False):
     sn_nb = []
     xmag = []
     for k in np.arange(maglim[0], maglim[1], magbin):
@@ -28,24 +27,26 @@ def jplus_SNratio(data, mask, band='J0395', SNcut=setup['SN'], magbin=setup['SNm
     sn_nb = np.array(sn_nb)
     tt =  np.isnan(sn_nb)
 
-    # when there are too little points the mag_vs_SNratio relation (blue thick line in plot) becomes
-    # too noisy and mag_cut is difficult to compute. To avoid this, I perform two consecutive
-    # interpolations on mag_vs_SNratio relation (2nd one is cyan thin line). Plot to understand.
-    g = interp1d(xmag[~tt], sn_nb[~tt], kind='linear')
-    magsNB = np.arange(min(xmag[~tt]), max(xmag[~tt]), 1.9*magbin)
-    snsNB = g(magsNB)
-    f = interp1d(snsNB, magsNB, kind='linear', bounds_error=None, fill_value='extrapolate')
+    f = interp1d(sn_nb[~tt], xmag[~tt], kind='linear', bounds_error=None, fill_value='extrapolate')
     mag_cut = f(SNcut)
 
-    # plt.plot(data[band][mask,0], (1./data[band][mask,1]), 'or', markersize=1)
-    # plt.plot(xmag, sn_nb, 'b-', linewidth=4)
-    # plt.plot(magsNB, snsNB, 'r-', linewidth=1)
-    # ssNB = np.arange(0, 25, 0.05)
-    # mmNB = f(ssNB)
-    # plt.plot(mmNB, ssNB, 'c-', linewidth=1)
-    # plt.plot( (16.,26.), (SNcut, SNcut), 'g-', linewidth=1)
-    # plt.axis([16., 26., -0.5, 15.])
-    # plt.show()
-    # plt.close()
+    # Test to ensure that there are enough points to compute a good S/N interpolation
+    test = ( (1./data[band][:,1]) < SNcut)
+    if len(data[band][test,1]) < 20:   # 20 is arbitrary.
+        print '\nS/N plot might be wrongly evaluated. Check plot and tools/signalTOnoise.py!'
+        #show_plt = True
+        
+    if show_plt == True:
+        fig = plt.figure(figsize=(10,7))
+        plt.plot(data[band][mask,0], (1./data[band][mask,1]), 'or', markersize=2, alpha=0.4, label='current tile data')
+        plt.plot(xmag, sn_nb, 'b-', linewidth=2.5, label='S/N average per bin')
+        plt.plot( (16.,26.), (SNcut, SNcut), 'g-', linewidth=1.5, label='S/N cut = '+str(int(SNcut)))
+        plt.axis([16., 26., -0.5, 15.])
+        plt.title('S/N interpolation test-plot')
+        plt.xlabel(band+'  [mags]')
+        plt.ylabel('S/N')
+        plt.legend()
+        plt.show()
+        plt.close()
 
     return mag_cut

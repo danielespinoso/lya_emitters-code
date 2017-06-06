@@ -1,11 +1,13 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
 import sys
 import os
 
 import tools.jplus_filter_system
-import tools.converters
+from tools.converters import magtoflux as MtF
+from tools.converters import fluxtomag as FtM
 
 import tools.settings
 setup = tools.settings.set_up()
@@ -15,32 +17,35 @@ import jplus
 
 
 def plot_spec(lamb, x, errx, title, unt='mags', limits=[3400., 9000., 25.5, 16.5], idd=0):
-    fig = plt.figure()
+    fig = plt.figure(figsize=(12,10))
+    matplotlib.rcParams.update({'font.size': 16})
+    matplotlib.rcParams.update({'lines.linewidth': 3})
+    matplotlib.rcParams.update({'lines.markersize': 6})
     ax = plt.subplot(111)
     kol = (1.,0,1.) #uJAVA
-    ax.errorbar(lamb[0], x[0], yerr=errx[0], c=kol, fmt='s', ecolor=kol, markersize=4, alpha=0.7, label='uJAVA')
+    ax.errorbar(lamb[0], x[0], yerr=errx[0], c=kol, fmt='s', ecolor=kol, alpha=0.7, label='uJAVA')
     kol = (0.7,0,0.7) #J0378
-    ax.errorbar(lamb[1], x[1], yerr=errx[1], c=kol, fmt='o', ecolor=kol, markersize=4, alpha=0.7, label='J0378')
+    ax.errorbar(lamb[1], x[1], yerr=errx[1], c=kol, fmt='o', ecolor=kol, alpha=0.7, label='J0378')
     kol = (0.5,0,1.)  #J0395
-    ax.errorbar(lamb[2], x[2], yerr=errx[2], c=kol, fmt='o', ecolor=kol, markersize=4, alpha=0.7, label='J0395')
+    ax.errorbar(lamb[2], x[2], yerr=errx[2], c=kol, fmt='o', ecolor=kol, alpha=0.7, label='J0395')
     kol = (0.,0.,1.)  #J0410
-    ax.errorbar(lamb[3], x[3], yerr=errx[3], c=kol, fmt='o', ecolor=kol, markersize=4, alpha=0.7, label='J0410')
+    ax.errorbar(lamb[3], x[3], yerr=errx[3], c=kol, fmt='o', ecolor=kol, alpha=0.7, label='J0410')
     kol = (0.,0.8,0.8)  #J0430
-    ax.errorbar(lamb[4], x[4], yerr=errx[4], c=kol, fmt='o', ecolor=kol, markersize=4, alpha=0.7, label='J0430')
+    ax.errorbar(lamb[4], x[4], yerr=errx[4], c=kol, fmt='o', ecolor=kol, alpha=0.7, label='J0430')
     kol = (0.,0.6,0.6)  #gJAVA
-    ax.errorbar(lamb[5], x[5], yerr=errx[5], c=kol, fmt='s', ecolor=kol, markersize=4, alpha=0.7, label='gJAVA')
+    ax.errorbar(lamb[5], x[5], yerr=errx[5], c=kol, fmt='s', ecolor=kol, alpha=0.7, label='gJAVA')
     kol = (0.4,0.8,0.)  #J0515
-    ax.errorbar(lamb[6], x[6], yerr=errx[6], c=kol, fmt='o', ecolor=kol, markersize=4, alpha=0.7, label='J0515')
+    ax.errorbar(lamb[6], x[6], yerr=errx[6], c=kol, fmt='o', ecolor=kol, alpha=0.7, label='J0515')
     kol = (1.,0.5,0.)  #rJAVA
-    ax.errorbar(lamb[7], x[7], yerr=errx[7], c=kol, fmt='s', ecolor=kol, markersize=4, alpha=0.7, label='rJAVA')
+    ax.errorbar(lamb[7], x[7], yerr=errx[7], c=kol, fmt='s', ecolor=kol, alpha=0.7, label='rJAVA')
     kol = (1.,0.,0.)  #J0660
-    ax.errorbar(lamb[8], x[8], yerr=errx[8], c=kol, fmt='o', ecolor=kol, markersize=4, alpha=0.7, label='J0660')
+    ax.errorbar(lamb[8], x[8], yerr=errx[8], c=kol, fmt='o', ecolor=kol, alpha=0.7, label='J0660')
     kol = (0.8,0.,0.)  #iJAVA
-    ax.errorbar(lamb[9], x[9], yerr=errx[9], c=kol, fmt='s', ecolor=kol, markersize=4, alpha=0.7, label='iJAVA')
+    ax.errorbar(lamb[9], x[9], yerr=errx[9], c=kol, fmt='s', ecolor=kol, alpha=0.7, label='iJAVA')
     kol = (0.6,0.,0.)  #J0861
-    ax.errorbar(lamb[10], x[10], yerr=errx[10], c=kol, fmt='o', ecolor=kol, markersize=4, alpha=0.7, label='J0861')
+    ax.errorbar(lamb[10], x[10], yerr=errx[10], c=kol, fmt='o', ecolor=kol, alpha=0.7, label='J0861')
     kol = (0.3,0.,0.)  #zJAVA
-    ax.errorbar(lamb[11], x[11], yerr=errx[11], c=kol, fmt='s', ecolor=kol, markersize=4, alpha=0.7, label='zJAVA')
+    ax.errorbar(lamb[11], x[11], yerr=errx[11], c=kol, fmt='s', ecolor=kol, alpha=0.7, label='zJAVA')
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
@@ -48,42 +53,91 @@ def plot_spec(lamb, x, errx, title, unt='mags', limits=[3400., 9000., 25.5, 16.5
     ax.set_title(title)
     ax.set_xlabel('wavelenght  [A]')
     if unt == 'mags':
-        ax.set_ylabel('magnitude  [mags]')
+        ax.set_ylabel(setup['mag_type']+'  [mags]')
     else:
-        ax.set_ylabel('flux  [erg/s*cm2]')
+        ax.set_ylabel(setup['mag_type']+'_flux  [erg/s*cm2]')
     ax.legend(loc='center left', fontsize = 'small', bbox_to_anchor=(1, 0.5))
     #plt.savefig(setup['plots']+'spectra/spectrum_BPZobj'+str(idd+1)+'_BFtemplate_withANDnoNB.png')
     #plt.savefig(setup['plots']+'meetings/26-04-2016/qso'+str(idd)+'_flux.png')
-    plt.show()
+    plt.savefig(setup['plots']+setup['mag_type']+'_mags_'+title[:4]+'_candidates_composite.png')
+    #plt.show()
     plt.close()
 
 
 
     
 
-def plot_MEDspectra(data, mask):
+def plot_MEDspectra(data, mask=[], titol=''):
+    if len(mask) == 0:
+        mask = np.ones(len(data['rJAVA'][:,0]), dtype=bool)
+        
+    dataset = jplus.tools.select_object(data, mask)
+    for i in np.arange(0, 12):
+        flt = tools.jpflt(i)
+        fl, dfl = MtF(dataset[flt][:,0], band=flt, dmags=dataset[flt][:,1], unit='l')
+        key = flt + '_flux'
+        dataset[key] = np.array([fl, dfl]).T
+
+    ll = len(dataset['rJAVA'][:,0])
+
+    newspec = {}
     lamb = np.empty(12)
-    mags = np.empty(12)
-    errmags = np.empty(12)
-    fluxs = np.empty(12)
-    errfluxs = np.empty(12)
-    X = [],[],[],[],[],[],[],[],[],[],[],[]
-    for i,j in zip(np.arange(0,12), jplus.datasets.jplus_filter_names(only_bb=False) ):
-        lamb[i] = tools.jplus_filter_system.jplus_pivot(j)
-        aa = data[j][mask,0]
-        mm = ( aa > 0.)
-        ff = tools.converters.magtoflux(aa[mm], band=j)
-        X[i].extend(ff)
-        fluxs[i] = np.median(X[i])
-        errfluxs[i] = np.std(X[i])
-        mags[i], errmags[i] =  tools.converters.singleFtoM(fluxs[i], band=j, dflux=errfluxs[i])
+    median = np.empty(12)
+    median_err = np.empty(12)
+    fref = 1.0e-16  # I choose to put the rJAVA band of all the spectra at 1.e-16
+    for i in np.arange(0, 12):
+        flt = tools.jpflt(i)
+        key = flt + '_flux'
+        newspec[flt] = fref*(dataset[key][:,0]/dataset['rJAVA_flux'][:,0])
+        lamb[i] = tools.jplus_filter_system.jplus_pivot(flt)
+        median[i] = np.median(newspec[flt])
+        median_err[i] = np.median(dataset[key][:,1])
 
-    titul = 'Tentative composite spectra'
-    plot_spec(lamb, mags, errmags, titul, unt='mags', limits=[3400., 9000., 23., 19.])
-    plot_spec(lamb, fluxs, errfluxs, titul, unt='flux', limits=[3400., 9000., -2.e-17, 1.5e-16])
+    plot_spec(lamb, median, median_err, titol, unt='flux', limits=[3400., 9000., 0., 7.0e-16])
+    #return median, median_err
+
+
+    
 
 
 
+# plots the difference between two composite spectra (mask1 - mask2, not the opposite)
+def plot_MEDspectra_diff(data, mask1=[], mask2=[], titol=''):
+    mask = np.array([mask1, mask2]).T
+    lamb = np.empty(12)
+    median = np.empty((12,2))
+    median_err = np.empty((12,2))
+    for qq in range(0,mask.shape[1]) :
+        dataset = jplus.tools.select_object(data, mask[:,qq])
+        for i in np.arange(0, 12):
+            flt = tools.jpflt(i)
+            fl, dfl = MtF(dataset[flt][:,0], band=flt, dmags=dataset[flt][:,1], unit='l')
+            key = flt + '_flux'
+            dataset[key] = np.array([fl, dfl]).T
+            
+        ll = len(dataset['rJAVA'][:,0])
+
+        newspec = {}
+        fref = 1.0e-16  # I choose to put the rJAVA band of all the spectra at 1.e-16 (arbitrary)
+        for i in np.arange(0, 12):
+            flt = tools.jpflt(i)
+            key = flt + '_flux'
+            newspec[flt] = fref*(dataset[key][:,0]/dataset['rJAVA_flux'][:,0])
+            lamb[i] = tools.jplus_filter_system.jplus_pivot(flt)
+            median[i,qq] = np.median(newspec[flt])
+            median_err[i,qq] = np.median(dataset[key][:,1])
+
+    diff = median[:,0] - median[:,1]  # ATTENTION!! It's (mask1 - mask2), not the opposite!!
+    diff_err = np.sqrt(median_err[:,0]**2. + median_err[:,1]**2.) 
+    plot_spec(lamb, diff, diff_err, titol, unt='flux', limits=[3400., 9000., -3.0e-16, 3.0e-16])
+    
+    #return diff, diff_err
+
+    
+
+    
+
+    
     
 
 def plot_JPLUSphotoSpectra(first_data, first_objid, mask=[], units='mags', zsdss=0, zfromSDSS=False, number=0):
@@ -194,33 +248,5 @@ def plot_lumiFunc(fsky, comovDist_interpolation, properVol=False):
     plt.title('Luminosity function  -  JPLUS lya candidates')
     #plt.savefig(setup['plots'] + 'LumiFunc_z2.24_'+str(dLogL)+'bin_better.png')
     plt.legend()
-    plt.show()
-    plt.close()
-
-
-def morpHisto(jpl, sdss, qso, gaia):
-    violet = (0.6, 0.0, 0.6)
-    orange = (1.0, 0.5, 0.0)
-    yellow = (1.0, 1.0, 0.0)
-    
-    from tools.histo import histogram
-    jpl_cent, jpl_hist = histogram(jpl, 0, 10, 0.25)
-    sdss_cent, sdss_hist = histogram(sdss, 0, 10, 0.25)
-    qso_cent, qso_hist = histogram(qso, 0, 10, 0.25)
-    gaia_cent, gaia_hist = histogram(gaia, 0, 10, 0.25)
-    
-    jpl_hist = jpl_hist/max(jpl_hist)
-    sdss_hist = sdss_hist/max(sdss_hist)
-    qso_hist = qso_hist/max(qso_hist)
-    gaia_hist = gaia_hist/max(gaia_hist)
-
-    plt.plot(jpl_cent, jpl_hist, 'b', alpha=0.4, label='selected')
-    plt.plot(sdss_cent, sdss_hist, color=violet, markersize=6, alpha=0.4, label='galaxies')
-    plt.plot(qso_cent, qso_hist, color=yellow, markersize=6, alpha=0.8, label='qso')
-    plt.plot(gaia_cent, gaia_hist, color='r', markersize=6, alpha=0.4, label='gaia')
-    plt.xlabel(' FWHM / PDF ')
-    plt.title('FWHM and PSF both in rJAVA')
-    plt.legend()
-    #plt.savefig(setup['plots']+'morpho_hist.png')
     plt.show()
     plt.close()

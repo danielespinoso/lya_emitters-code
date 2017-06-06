@@ -12,24 +12,18 @@ violet = (0.6, 0.0, 0.6)
 orange = (1.0, 0.5, 0.0)
 yellow = (1.0, 1.0, 0.0)
 
-def plot_colorMag_bytile(data_jpl, color, mask_selec=[], mask_tile=[],\
-                         linea=[], mag_cut=20.5, tile_num=2525):
+def plot_colorMag_bytile(data_jpl, color, mask_selec=[], mask_tile=[], linea=[], mag_cut=20.5, tile_num=2525):
     
     sigline = linea(setup['marr'])
-    plt.plot(data_jpl[filt[0]][mask_tile,0], color[mask_tile], 'og',\
-             alpha=0.2, markersize=3, label='all data')   #plot all sources in tile 'tile_num'
-    plt.plot(data_jpl[filt[0]][mask_selec,0], color[mask_selec], 'ob',\
-             alpha=0.5, markersize=3, label='selected')   #plot selected sources in tile 'tile_num'
+    plt.plot(data_jpl[filt[0]][mask_tile,0], color[mask_tile], 'og', alpha=0.2, markersize=3, label='all data')   #plot all sources in tile 'tile_num'
+    plt.plot(data_jpl[filt[0]][mask_selec,0], color[mask_selec], 'ob', alpha=0.5, markersize=3, label='selected')   #plot selected sources in tile 'tile_num'
     plt.plot(setup['marr'], sigline, 'r--', linewidth=2)  #plot sigma_line
     plt.plot( (mag_cut, mag_cut), (-2., 15.), '--', c=violet, linewidth=2) #vertical line at mag_cut
     
     plt.axis([15.5, 24.5, -2, 7.])
-    plt.text( 16., sigline[11]+0.25, r'$\Sigma$ = '+str(setup['sigma']),\
-              color='r', fontweight='bold', fontsize=10)
-    plt.text( (mag_cut+0.25), 6., 'S/N = '+str(setup['SN']),\
-              color=violet, fontweight='bold', fontsize=10)
-    plt.text( (mag_cut+0.25), 5.5, 'mag cut = '+str(int(mag_cut*100)/100.),\
-              color=violet, fontweight='bold', fontsize=10)
+    plt.text( 16., sigline[11]+0.25, r'$\Sigma$ = '+str(setup['sigma']), color='r', fontweight='bold', fontsize=10)
+    plt.text( (mag_cut+0.25), 6., 'S/N = '+str(setup['SN']), color=violet, fontweight='bold', fontsize=10)
+    plt.text( (mag_cut+0.25), 5.5, 'mag cut = '+str(int(mag_cut*100)/100.), color=violet, fontweight='bold', fontsize=10)
     plt.title('jplus tile: '+str(tile_num))
     plt.legend(loc=2)
     plt.xlabel(str(filt[0])+'  [mags]')
@@ -44,8 +38,7 @@ def plot_colorMag_bytile(data_jpl, color, mask_selec=[], mask_tile=[],\
 
     
 
-def plot_ColCol_bytile(data_jpl, data_mock=[], BroadBands=['gJAVA', 'rJAVA'],\
-                       mask_sdss=[], mask_tile=[], mask_sel=[], tile_num=2525):
+def plot_ColCol_bytile(data_jpl, data_mock=[], BroadBands=['gJAVA', 'rJAVA'], mask_sdss=[], mask_tile=[], mask_sel=[], tile_num=2525):
 
     bbc_color = data_jpl[BroadBands[0]][:,0] - data_jpl[filt[0]][:,0]
     bbuc_color = data_jpl[BroadBands[1]][:,0] - data_jpl[filt[0]][:,0]
@@ -67,6 +60,7 @@ def plot_ColCol_bytile(data_jpl, data_mock=[], BroadBands=['gJAVA', 'rJAVA'],\
     plt.xlabel(filt[1]+' - '+filt[0]+'  [mags]')
     plt.ylabel(filt[2]+' - '+filt[0]+'  [mags]')
     plt.title('jplus tile: '+str(tile_num))
+    plt.text(1., 3.5, 'The uJAVA-gJAVA plane is plotted\nhere even if the selection\nis made in the rJAVA-gJAVA plane', color='r')
     plt.legend()
     #plt.savefig(plotpath+'color-color/'+setup['method']+'_'+filt[0]+'_UGcolor-color_tile'+str(i)+'.png')
     plt.show()
@@ -74,8 +68,8 @@ def plot_ColCol_bytile(data_jpl, data_mock=[], BroadBands=['gJAVA', 'rJAVA'],\
 
     
     
-def plot_CSTAR_bytile(data_jpl, mask_gaia=[], mask_sdss=[], mask_quasar=[],\
-                       mask_tile=[], mask_sel=[], mag_cut=20.5, tile_num=2525):
+    
+def plot_CSTAR_bytile(data_jpl, mask_gaia=[], mask_sdss=[], mask_quasar=[], mask_tile=[], mask_sel=[], mag_cut=20.5, tile_num=2525):
 
     mask_sdss = ((mask_sdss) & (mask_tile))
     mask_quasar = ((mask_quasar) & (mask_tile))
@@ -98,94 +92,72 @@ def plot_CSTAR_bytile(data_jpl, mask_gaia=[], mask_sdss=[], mask_quasar=[],\
     plt.title('jplus tile: '+str(tile_num))
     plt.show()
     plt.close()
-    #sys.exit()
+
+
 
     
-    
-def plot_morpho_bytile(data_jpl, image_info, mask_gaia=[], mask_sdss=[], mask_quasar=[],\
-                       mask_tile=[], mask_sel=[], mag_cut=20.5, tile_num=2525, PSF=False,\
-                       MUMAX=True, pntLike_line=1.):
-    # This function measures and plots the extended-ness of sources in a given tile
-    # using two different methods: retriving it from the image PSF and from MU_MAX parameter
-        
+# This function measures and plots the extended-ness of sources in a given tile using the MU_MAX parameter    
+def plot_morpho_bytile(data_jpl, mask_gaia=[], mask_sdss=[], mask_quasar=[],\
+                       mask_tile=[], mask_sel=[], mag_cut=20.5, tile_num=2525,\
+                       MUMAX=True, bord_params=[], ext_mask=[], comp_mask=[]):
+    # Other catalogues
     mask_sdss = ((mask_sdss) & (mask_tile))
     mask_quasar = ((mask_quasar) & (mask_tile))
-    mask_gaia = ((mask_gaia) & (mask_tile))
-    
+    mask_gaia = ((mask_gaia) & (mask_tile))    
     mask_gq = ((mask_quasar) & (mask_gaia) & (mask_tile))
-        
-    fig = plt.figure(figsize=(10,8))
-
-    # From PSF
-    if PSF == True:
-        psf_mask = ((image_info['tile_id'] == tile_num) & (image_info['filter_name'] == 'rJAVA'))
-        morpho_pdf = data_jpl['fwhm'][:]/image_info['psf'][psf_mask][0]
-        
-        plt.axis([14, 22.5, 0, 10])
-        
-        plt.plot(data_jpl['rJAVA'][mask_tile,0], morpho_pdf[mask_tile], 'og',\
-                 markersize=3, alpha=0.1, label='jplus')
-        if setup['plot_gaia'] == True:
-            plt.plot(data_jpl['rJAVA'][mask_gaia,0], morpho_pdf[mask_gaia], 'or',\
-                     markersize=4, alpha=0.1, label='gaia')
-        if setup['plot_sdssGal'] == True:
-            plt.plot(data_jpl['rJAVA'][mask_sdss,0], morpho_pdf[mask_sdss], 'o',\
-                     c=violet, markersize=4, alpha=0.35, label='sdss gal')
-        if setup['plot_sdssQSO'] == True:
-            plt.plot(data_jpl['rJAVA'][mask_quasar,0], morpho_pdf[mask_quasar], 'o',\
-                     color=yellow, markersize=4, alpha=0.6, label='sdss QSOs')
-        plt.plot(data_jpl['rJAVA'][mask_sel,0], morpho_pdf[mask_sel], 'ob', markersize=4,\
-                 alpha=0.8, label='selected')
-        
-        plt.plot( (mag_cut, mag_cut), (0, 10), 'k--', linewidth=2)
-        plt.text( (mag_cut-1.6), 9., 'mag cut = '+str(int(mag_cut*100)/100.),\
-                  color='k', fontweight='bold', fontsize=10)
-        plt.legend(loc=2)
-        plt.xlabel('rJAVA'+'  [mag]')
-        plt.ylabel('fwhm / PSF')
-        plt.title('jplus tile: '+str(tile_num))
-        #plt.savefig(setup['plots']+'FWHM_PSF_vs_'+filt[0]+'_tile'+str(tile_num)+'.png')
-        plt.show()
-        plt.close()
     
-    elif MUMAX == True:
-        # From MU_MAX parameter (mag/arcsec^2 of the bightest pixel)
-        pxl = 0.55*0.55  # jplus pixel area in arcsec^2
-        mumax = data_jpl['mu_max_r'] - 2.5*np.log10(pxl)
-        extdness = mumax - data_jpl['rJAVA'][:,0]
-
-        on_x = extdness[mask_tile]
-        on_y = data_jpl['rJAVA'][mask_tile,0]
-
-        H , y, x = np.histogram2d(on_x, on_y, bins = 150, normed = True)
-        plt.pcolor(x, y, H, norm=colors.LogNorm(), cmap='Greens')
+    # extended-compact classification border (from source_morphology.py)
+    if len(bord_params) == 6:
+        ixs = np.arange(14., 20.5, 0.1)
+        linea = setup['morph_fact'] * (bord_params[2] + (10.**(bord_params[3]*ixs+bord_params[4])) )\
+                + (bord_params[0] + bord_params[1]*ixs)
         
-        if setup['plot_gaia'] == True:
-            plt.plot(data_jpl['rJAVA'][mask_gaia,0], extdness[mask_gaia], 'or',\
-                     markersize=2, alpha=0.1, label='gaia')
-        if setup['plot_sdssGal'] == True:
-            plt.plot(data_jpl['rJAVA'][mask_sdss,0], extdness[mask_sdss], 'o',\
-                     c=violet, markersize=4, markeredgecolor='k', alpha=0.4, label='sdss gal')
-        if setup['plot_sdssQSO'] == True:
-            plt.plot(data_jpl['rJAVA'][mask_quasar,0], extdness[mask_quasar], 'o',\
-                     color=yellow, markersize=4, markeredgecolor='k', alpha=0.7, label='sdss QSOs')
+    # extended-ness parameter using mu_max
+    pxl = 0.55*0.55  # jplus pixel area in arcsec^2
+    mumax = data_jpl['mu_max_r'] - 2.5*np.log10(pxl)
+    extdness = mumax - data_jpl['rJAVA'][:,0]
 
-        # PLOT JPLUS OBJECTS IN BOTH GAIA AND SDSS_QSO
-        # plt.plot(data_jpl['rJAVA'][mask_gq,0], extdness[mask_gq], 'o', color=orange,\
-        #         markersize=2, alpha=0.6, label='gaia & QSOs')
-            
-        plt.plot(data_jpl['rJAVA'][mask_sel,0], extdness[mask_sel], 'ob',\
-                 markersize=4, alpha=0.8, label='selected')
+    # density-map of extended-ness parameter
+    on_x = extdness[mask_tile]
+    on_y = data_jpl['rJAVA'][mask_tile,0]
+    H , y, x = np.histogram2d(on_x, on_y, bins = 150, normed = True)
 
-        plt.plot((12., 26.), (pntLike_line, pntLike_line), 'r--', linewidth=2)
-        plt.plot((12., 26.), (pntLike_line+0.2, pntLike_line+0.2), 'k--', linewidth=1)
-        # plt.plot((12., 26.), (pntLike_line-0.2, pntLike_line-0.2), 'k--', linewidth=1)
-        
-        plt.colorbar(label = '"Extended-ness"')
-        plt.title('jplus tile: '+str(tile_num))
-        plt.xlabel('rJAVA'+'  [mag]')
-        plt.ylabel('MU_MAX(rJAVA)  -  rJAVA'+'  [mag]')
-        plt.legend(loc=1)
-        plt.savefig(setup['plots']+'MUMAX_tile'+str(tile_num)+'compactness_line.png')
-        #plt.show()
-        plt.close()
+    # the plot starts
+    fig = plt.figure(figsize=(12,10))
+    plt.pcolor(x, y, H, norm=colors.LogNorm(), cmap='Greens') #density-map
+
+    # plot other catalogues
+    if setup['plot_gaia'] == True:
+        plt.plot(data_jpl['rJAVA'][mask_gaia,0], extdness[mask_gaia], 'or',\
+                 markersize=2, alpha=0.1, label='gaia')
+    if setup['plot_sdssGal'] == True:
+        plt.plot(data_jpl['rJAVA'][mask_sdss,0], extdness[mask_sdss], 'o',\
+                 c=violet, markersize=4, markeredgecolor='k', alpha=0.4, label='sdss gal')
+    if setup['plot_sdssQSO'] == True:
+        plt.plot(data_jpl['rJAVA'][mask_quasar,0], extdness[mask_quasar], 'o',\
+                 color=yellow, markersize=4, markeredgecolor='k', alpha=0.7, label='sdss QSOs')
+    # plot JPLUS objects both in gaia and SDSS qso
+    # plt.plot(data_jpl['rJAVA'][mask_gq,0], extdness[mask_gq], 'o', color=orange,\
+    #         markersize=2, alpha=0.6, label='gaia & QSOs')
+    
+    # plot selected JPLUS candidates
+    plt.plot(data_jpl['rJAVA'][mask_sel,0], extdness[mask_sel], 'ob',\
+             markersize=4, alpha=0.8, label='selected')
+    
+    # plot extended-compact selection
+    if len(bord_params) == 6:
+        plt.plot(ixs, linea, 'm-', linewidth=2.)
+        plt.plot(data_jpl['rJAVA'][ext_mask,0], extdness[ext_mask], 'ok',\
+                 markersize=1, alpha=0.1, label='extended')
+        plt.plot(data_jpl['rJAVA'][comp_mask,0], extdness[comp_mask], 'or',\
+                 markersize=1, alpha=0.1, label='compact')
+
+    # finalizing the plot
+    plt.colorbar(label = '"Extended-ness"')
+    plt.title('jplus tile: '+str(tile_num))
+    plt.xlabel('rJAVA'+'  [mag]')
+    plt.ylabel('MU_MAX(rJAVA)  -  rJAVA'+'  [mag]')
+    plt.legend(loc=1)
+    #plt.savefig(setup['plots']+'MUMAX_tile'+str(tile_num)+'compactness_line.png')
+    plt.show()
+    plt.close()

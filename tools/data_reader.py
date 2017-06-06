@@ -13,8 +13,10 @@ import tools.screen_info as tsi
 # the process it saves a new jplus catalogue in $HOME/lya_emitters/datasets. This catalogue will have
 # -99. instead of [zeros, nan, +99] values and will get written only if doesn't already exist)
 
-def jplus_reader(out_name):
-    if not os.path.exists(out_name):
+def jplus_reader(out_name, my_overwr=True, jpl_overwr=False):
+    if setup['jpl_overwr'] == True: # if the dataset in home/jplus_data gets overwritten, then also the catalogue in lya_emitters/dataset must be overwritten
+        setup['my_overwr'] = True
+    if not os.path.exists(out_name) or setup['my_overwr']==True:
         sys.path.append(setup['jplus_code'])
         import jplus
         from jplus.datasets import fetch_jplus_objects as fetch
@@ -22,22 +24,28 @@ def jplus_reader(out_name):
         #----------------------------  (DOWN)LOADING JPLUS  ---------------------------#
         if setup['mag_type'] == 'auto':
             jpl = fetch(db='upad', mag_type="autoMags", mag_limit=[0,24], cstar_query=" ",\
-                        object_name='alltoR24', overwrite=False, dualMode=True,filter_name="rJAVA",\
-                        nchunks=20, extra_where_conds='')
+                        object_name='allTOr24', overwrite=setup['jpl_overwr'], dualMode=True,\
+                        filter_name="rJAVA", nchunks=20, extra_where_conds='')
         elif setup['mag_type'] == 'aper':
             jpl = fetch(db='upad', mag_type="aperMags", mag_limit=[0,24], cstar_query=" ",\
-                        object_name='alltoR24', overwrite=True, dualMode=True,filter_name="rJAVA",\
-                        nchunks=20, extra_where_conds='')
+                        object_name='allTOr24', overwrite=setup['jpl_overwr'], dualMode=True,\
+                        filter_name="rJAVA", nchunks=20, extra_where_conds='')
         #---------------------------  CLEANING JPLUS  --------------------------------#
         for ifilter in jplus.datasets.jplus_filter_names():
             ind = np.isfinite(jpl[ifilter][:,0]) #cleaning NaNs
-            jpl[ifilter][~ind,:] = [-99,-99]
+            jpl[ifilter][~ind,:] = [-99.0,-99.0]
             mask = (jpl[ifilter][:,0] == 0.) #cleaning zeros
             jpl[ifilter][mask,0] = -99.0
             jpl[ifilter][mask,1] = -99.0
             mask = (jpl[ifilter][:,0] == 99) #cleaning +99
             jpl[ifilter][mask,0] = -99.0
             jpl[ifilter][mask,1] = -99.0
+        iind = np.isfinite(jpl['mag_auto_r'][:]) #cleaning NaNs from "mag_auto_r"
+        jpl['mag_auto_r'][~iind] = -99.0
+        mask = (jpl['mag_auto_r'][:] == 0.) #cleaning zeros from "mag_auto_r"
+        jpl['mag_auto_r'][mask] = -99.0
+        mask = (jpl['mag_auto_r'][:] == 99) #cleaning +99 from "mag_auto_r"
+        jpl['mag_auto_r'][mask] = -99.0
         #----------------------------  LOADING SDSS  ---------------------------#
         if setup['sdssPhot'] == True:
             tsi.update_print('working on datasets... ', appendix='loading  sdss')
@@ -94,6 +102,7 @@ def jplus_reader(out_name):
             'fwhm':jpl['fwhm'][mask_js],
             'KronRad':jpl['kron_rad'][mask_js],           
             'PetroRad':jpl['petro_rad'][mask_js],
+            'mag_auto_r':jpl['mag_auto_r'][mask_js],
             'mu_max_r':jpl['mu_max_r'][mask_js]
         }
         if setup['mag_type'] == 'aper':

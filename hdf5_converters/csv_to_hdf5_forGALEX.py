@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 # (below) must be adapted consequently!!
 ###############################################
 
-jplus_input = '/home/CEFCA/dspinoso/works/lya_emitters/datasets/jplus_alltoR24_autoMags_upad_dual_jplusPhot.h5'
+jplus_input = '/home/CEFCA/dspinoso/works/lya_emitters/datasets/jplus_allTOr24_autoMags_upad_dual_jplusPhot.h5'
 alljpl = dd.io.load(jplus_input)
 
 # input galex filename

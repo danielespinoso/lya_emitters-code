@@ -21,7 +21,6 @@ from jplus.tools import crossmatch_angular as xmatch
 #######################################################
 
 
-
 #--------------- LOADING DATASETS ---------------#
 jpl = dd.io.load(setup['jplus_candidates'])  # loads the list of candidates
 #alljpl = dd.io.load(setup['jplus_input'])   # loads the initial jplus catalogue
@@ -49,7 +48,8 @@ if setup['load_rafa'] == True:
 if setup['load_lqac'] == True:
     lqac = dd.io.load(setup['lqac'])          #load Large Qasar Astrometric Catalogue
 
-print 'Loaded datasets:\n'
+print '\nUsing '+setup['mag_type']+' mags'
+print '\nList of loaded datasets:'
 if setup['load_sdssGal'] == True: print 'sdss galaxies'
 if setup['load_sdssQSO'] == True: print 'sdss quasars'
 if setup['load_gaia'] == True: print 'overlapping gaia'
@@ -76,8 +76,8 @@ print '\nInitial candidates: ', len(jpl['coords'][:,0])
 
 
 #-------------- BB SIGNAL-to-NOISE SELECTION  --------------#
-mcutR = tools.jplus_SNratio(jpl, mask=[], band='rJAVA', SNcut=3.)
-mcutG = tools.jplus_SNratio(jpl, mask=[], band='gJAVA', SNcut=3.)
+mcutR = tools.jplus_SNratio(jpl, mask=[], band='rJAVA', SNcut=setup['SN']., show_plt=False)
+mcutG = tools.jplus_SNratio(jpl, mask=[], band='gJAVA', SNcut=setup['SN'], show_plt=False)
 
 SNcutR_mask = (jpl['rJAVA'][:,0] < mcutR)
 jpl['over_rJAVA_cut'] = SNcutR_mask
@@ -88,34 +88,9 @@ jpl['over_gJAVA_cut'] = SNcutG_mask
 jpl['over_all_SNcuts'] = ((SNcutR_mask) & (SNcutG_mask))
 
 
-#---------------  REDSHIFT ESTIMATE and SELECTION  --------------------#
-#------- LEPHARE -------#
-#jpl_LPz = lya_lephare_jplus(jpl, setup['leph_bb'], name=' ', owtspec=True, owr_prep=True, owr_run=True)
-# leph_results = setup['data'] + 'jplus_alltoR24_autoMags_upad_dual_jplusPhot_lpphotoz_recalpertile_filflag0000010101010000000000_EM_ .h5'
-# leph = dd.io.load(leph_results)
-
-# plt.plot(leph['PDFzstep'], leph['PDF'][4,:], 'r-')
-# plt.xlabel('z')
-# plt.ylabel('PDF')
-# plt.show()
-# plt.close()
 
 '''
-jpl['redshift'] = zml_NB  ### USE LEPHARE ESTIMATE
-jpl['redshift_noNB'] = zml  ### USE LEPHARE ESTIMATE
-'''
-if setup['zmask'] == True:
-    zmask = ((jpl['redshift'] > setup['zmin']) & (jpl['redshift'] < setup['zmax']))
-else:
-    zmask = np.ones(len(jpl['coords'][:,0]), dtype=bool)
-jpl['right_z'] = zmask
-
-print 'After redshift selection: ', len(jpl['coords'][zmask,0])
-
-
-
-
-#-------------- RAFA CATALOG CROSSMATCH  --------------# (TRY)
+#-------------- RAFA CATALOG CROSSMATCH  --------------#
 if setup['load_rafa'] == True:
     dist_rafa, ind_rafa = xmatch(jpl['coords'], rafa['coords'], max_distance=3./3600.)
     rafa_mask = (dist_rafa != np.inf)
@@ -124,18 +99,9 @@ else:
     rafa_mask = np.zeros(len(jpl['coords'][:,0]), dtype=bool)
 jpl['HII_region'] = rafa_mask
 
-
-
-
-#-------------- LQAC CATALOG CROSSMATCH  --------------# (TRY)
-if setup['load_lqac'] == True:
-    dist_lqac, ind_lqac = xmatch(jpl['coords'], lqac['coords'], max_distance=3./3600.)
-    lqac_mask = (dist_lqac != np.inf)
-    print 'LQAC quasars: ', len(jpl['coords'][lqac_mask,0])
-else:
-    lqac_mask = np.zeros(len(jpl['coords'][:,0]), dtype=bool)
-jpl['lqac_qso'] = lqac_mask
-
+hII_extended_mask = ((jpl['extended']) & (jpl['HII_region']))
+print 'There are ', len(jpl['coords'][hII_extended_mask,0]),' HII regions in the list of extended candidates'
+'''
 
 
 
@@ -221,6 +187,20 @@ jpl['sdss_rightZ_qso'] = qsomask_z
 
 
 
+#-------------- LQAC CATALOG CROSSMATCH  --------------#
+if setup['load_lqac'] == True:
+    dist_lqac, ind_lqac = xmatch(jpl['coords'], lqac['coords'], max_distance=3./3600.)
+    lqac_mask = (dist_lqac != np.inf)
+else:
+    lqac_mask = np.zeros(len(jpl['coords'][:,0]), dtype=bool)
+jpl['lqac_qso'] = lqac_mask
+
+only_lqac_mask = ((jpl['lqac_qso']) & (~jpl['sdss_qso']))
+print 'New quasars from LQAC (not already in sdss): ', len(jpl['coords'][only_lqac_mask,0])
+
+
+
+
 #-------------- GAIA CROSSMATCH  --------------#
 if setup['load_gaia']==True:
     djg, ijg = xmatch(jpl['coords'], gaia['coords'], max_distance=3./3600.)
@@ -238,23 +218,12 @@ jpl['gaia'] = gaiamask
 
 
 
-#-------------- CANDIDATE EXTENT  --------------# TO BE UPDATED AFTER THE NEW MORPHOLOGY SELECTION
-pxl = 0.55*0.55  # jplus pixel area in arcsec^2
-mumax = jpl['mu_max_r'] - 2.5*np.log10(pxl)
-morph = mumax - jpl['rJAVA'][:,0]
+# #-------------- CANDIDATE EXTENT  --------------#
+if setup['mag_type'] == 'auto':
+    print 'Extended objects: ', len(jpl['coords'][jpl['extended'],0])
+    print 'Compact objects: ', len(jpl['coords'][jpl['compact'],0])
 
-tile_ext_lim = np.genfromtxt('tile_to_extent.txt', unpack=False)
-jpl['compactness'] = np.zeros(len(jpl['mu_max_r']), dtype=bool)
-for i in set(jpl['tile_id']):
-    ext_lim = tile_ext_lim[tile_ext_lim[:,0]==i, 1][0]
-    mask_tile = (jpl['tile_id'] == i)
-    mask_tilext = ((mask_tile) & (morph < ext_lim))
     
-    jpl['compactness'] = ((jpl['compactness']) | (mask_tilext))  #EXTENT FLAG (True if compact)
-
-print 'Extended objects: ', len(jpl['coords'][~jpl['compactness'],0])
-
-
 
 
 #--------------  (QSO?) NB LINE EMISSIONS   --------------#
@@ -293,14 +262,26 @@ jpl['all_liners'] = lines_mask
 
 
 
+#----------------------  Lya LUMINOSITIES  ----------------------#
+fluxlya, fcont, flux_nb, fcont_error = tools.threeFM.jplus3FM(jpl)
+comov_table = setup['tools'] + 'comoving_distance.txt'
+z, eta = np.genfromtxt(comov_table, skip_header=1, unpack=True)
+line = interp1d(z, eta, kind='nearest', bounds_error=None, fill_value='extrapolate')
+dl = line(setup['zmean'])*(1+setup['zmean'])                   #now in Mpc, all at same redshift
+dl = dl*(1.e6)*3.0856e18              #now in cm 
+lumilya = 4.*np.pi*fluxlya*(dl**2.)   #now in erg/s
+
+jpl['lya_lumin'] = lumilya
+
+
 
 
 #------------------  FLAGS AND CANDIDATE SELECTION ------------------#
-flags = ['right_z', 'in_galex', 'sdss_gal', 'sdss_qso', 'sdss_rightZ_qso', 'compactness',\
+flags = ['in_galex', 'sdss_gal', 'sdss_qso', 'sdss_rightZ_qso', 'compact', 'extended',\
          'J0660_liners', 'J0861_liners', 'J0410_liners', 'J0430_liners', 'J0515_liners',\
          'all_liners', 'gaia', 'HII_region', 'lqac_qso']
-candidates = ( (jpl['right_z']) & (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & \
-               (~jpl['sdss_rightZ_qso']) & (~jpl['compactness']) & (~jpl['all_liners']) &\
+candidates = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & \
+               (~jpl['sdss_rightZ_qso']) & (jpl['compact']) & (~jpl['all_liners']) &\
                (~jpl['gaia']) )
 
 print 'Final candidates number: ', len(jpl['coords'][candidates,0]),'\n\n'
@@ -308,25 +289,10 @@ print 'Final candidates number: ', len(jpl['coords'][candidates,0]),'\n\n'
 over_SN = ((candidates) & (jpl['over_all_SNcuts']))
 print 'Over all SN cuts:', len(jpl['coords'][over_SN,0]),'\n\n'
 
-sdss_lqac_mask = ((jpl['lqac_qso']) & (jpl['sdss_qso']))
-print 'There are ', len(jpl['coords'][sdss_lqac_mask,0]),' lqac quasars in sdss list'
-hII_extended_mask = ((~jpl['compactness']) & (jpl['HII_region']))
-print 'There are ', len(jpl['coords'][hII_extended_mask,0]),' HII regions in the extended list'
-
-# fig = plt.figure(figsize=(12,10))
-# plt.plot(jpl['rJAVA'][jpl['sdss_gal'],0], morph[jpl['sdss_gal']], 'oc', markersize=4, label='SDSS gal', alpha=1.0)
-# plt.plot(jpl['rJAVA'][jpl['sdss_qso'],0], morph[jpl['sdss_qso']], 'ob', markersize=4, label='SDSS QSO (all)', alpha=0.5)
-# plt.plot(jpl['rJAVA'][jpl['sdss_rightZ_qso'],0], morph[jpl['sdss_rightZ_qso']], 'or', markersize=4,label='SDSS QSO (z=2.1)', alpha=1.)
-# plt.plot(jpl['rJAVA'][candidates,0], morph[candidates], 'og', markersize=2, label='candidates', alpha=0.8)
-# plt.legend()
-# plt.xlabel('rJAVA  [mags]')
-# plt.ylabel('MU_MAX(rJAVA)  -  rJAVA'+'  [mag]')
-# plt.title('All JPLUS tiles')
-# plt.show()
-# plt.close()
 
 
-# #------- FLAG-ORIENTED COLOR-COLOR PLOT -------#
+#-------------------------   PLOTS   -------------------------#
+# #FLAG-ORIENTED COLOR-COLOR
 # fig = plt.figure(figsize=(12,10))
 # fx = ['uJAVA', 'gJAVA']
 # fy = ['gJAVA', 'rJAVA']
@@ -334,7 +300,7 @@ print 'There are ', len(jpl['coords'][hII_extended_mask,0]),' HII regions in the
 # ycol = jpl[fy[0]][:,0] - jpl[fy[1]][:,0]
 # #plt.plot(xcol[jpl['sdss_qso']], ycol[jpl['sdss_qso']], 'or', markersize=4, alpha=0.5, label='all SDSS QSOs')
 # plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'om', markersize=4, alpha=0.8, label='SDSS QSOs z=2.1')
-# plt.plot(xcol[over_SN], ycol[over_SN], 'ob', markersize=4, alpha=0.7, label='extd over all SNcuts')
+# plt.plot(xcol[over_SN], ycol[over_SN], 'ob', markersize=4, alpha=0.3, label='extd over all SNcuts')
 # #plt.plot(xcol[jpl['gaia']], ycol[jpl['gaia']], 'og', markersize=4, alpha=0.5, label='gaia')
 # plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]')
 # plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]')
@@ -342,41 +308,29 @@ print 'There are ', len(jpl['coords'][hII_extended_mask,0]),' HII regions in the
 # plt.legend()
 # plt.show()
 # plt.close()
+# sys.exit()
 
-#sys.exit()
-
-
-
-
-#--------------  PLOT SPECTRA (composite is WIP)  --------------#
+# #PLOT SINGLE SPECTRA
 # objectid = 6
 # tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, objectid-1, mask=jpl['sdss_rightZ_qso'], units='flux', zfromSDSS=False)
-# #tools.plot_JPLUS_results.plot_MEDspectra(new_jpl, mask=~qsomask)
-# sys.exit()
+
+# #PLOT MEDIAN SPECTRA
+mask_med_spec = jpl['sdss_rightZ_qso']
+tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='QSOs SDSS median Photo-spectrum')
+
+# candidates2 = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & \
+#                (~jpl['sdss_rightZ_qso']) & (jpl['extended']) & (~jpl['all_liners']) &\
+#                (~jpl['gaia']) )
+# mask_med_spec2 = candidates2
+
+# tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec2, titol='Extended candidates median Photo-spectrum')
+# tools.plot_JPLUS_results.plot_MEDspectra_diff(jpl, mask1=mask_med_spec, mask2=mask_med_spec2, titol='Difference median Photo-spectrum')
+
+
+sys.exit()
 
 
 
-#----------------------  FWHM HISTOGRAM  ----------------------#
-# plt.hist(new_jpl['fwhm'], range=(0,10), bins=20, histtype='step')
-# plt.xlabel('FWHM  [pixels]')
-# plt.savefig(setup['plots']+'FWHM_histogram.png')
-# plt.show()
-# plt.close()
-# sys.exit()
-
-
-
-#----------------------  Lya LUMINOSITIES  ----------------------#
-fluxlya, fcont, flux_nb, fcont_error = tools.threeFM.jplus3FM(jpl)
-comov_table = setup['tools'] + 'comoving_distance.txt'
-z, eta = np.genfromtxt(comov_table, skip_header=1, unpack=True)
-line = interp1d(z, eta, kind='nearest', bounds_error=None, fill_value='extrapolate')
-dl = line(setup['zmean'])*(1+setup['zmean'])                   #now in Mpc, all at same redshift
-#dl = line(jpl['redshift'][:])*(1+jpl['redshift'][:])   #now in Mpc, redshift from leph.
-dl = dl*(1.e6)*3.0856e18              #now in cm 
-lumilya = 4.*np.pi*fluxlya*(dl**2.)   #now in erg/s
-
-jpl['lya_lumin'] = lumilya
 
 
 
@@ -386,7 +340,7 @@ jpl['lya_lumin'] = lumilya
 all_final = jplus.tools.select_object(jpl, candidates)
 final = jplus.tools.select_object(jpl, over_SN)
 dd.io.save(setup['final_catalog'], all_final)
-dd.io.save(setup['final_catalog']+'_overSN', final)
+dd.io.save(setup['final_catalog'][:-3]+'_overSN.h5', final)
 dd.io.save(setup['flagged_catalog'], jpl)
 
 matrix = np.empty( (8, len(jpl['coords'][candidates,0])) )
@@ -400,7 +354,7 @@ matrix[6,:] = jpl['rJAVA'][candidates,0]
 matrix[7,:] = jpl['redshift'][candidates]
 head = 'tl   ra        dec    NBmag line_flux line_lum  rJAVA  z_NB'
 fmt_string = '%4d %3.5f %3.5f %4.2f %4.3e %4.3e %4.2f %4.3f'
-np.savetxt(setup['results']+'final_list_22-05-2017', matrix.T, fmt=fmt_string, header=head)
+np.savetxt(setup['final_list'], matrix.T, fmt=fmt_string, header=head)
 
 
 matrix = np.empty( (2, len(jpl['coords'][candidates,0])) )
@@ -408,7 +362,7 @@ matrix[0,:] = jpl['coords'][candidates,0]
 matrix[1,:] = jpl['coords'][candidates,1]
 head = 'ra        dec'
 fmt_string = '%3.5f %3.5f'
-np.savetxt(setup['results']+'final_list_ra-dec_22-05-2017', matrix.T, fmt=fmt_string, header=head)
+np.savetxt(setup['final_radec'], matrix.T, fmt=fmt_string, header=head)
 
 
 matrix = np.empty( (2, len(jpl['coords'][over_SN,0])) )
@@ -416,7 +370,7 @@ matrix[0,:] = jpl['coords'][over_SN,0]
 matrix[1,:] = jpl['coords'][over_SN,1]
 head = 'ra        dec'
 fmt_string = '%3.5f %3.5f'
-np.savetxt(setup['results']+'final_list_ra-dec_overSN_22-05-2017', matrix.T, fmt=fmt_string, header=head)
+np.savetxt(setup['final_radec_overSN'], matrix.T, fmt=fmt_string, header=head)
 sys.exit()
 
 
