@@ -155,6 +155,8 @@ print '\nNumber of tiles to analyse: ', len(set(jpl['tile_id']))
 for i in set(jpl['tile_id']):
     uPrint('working on jplus data tile by tile... now: ',appendix=str(int(i)) )
     tilemask = (jpl['tile_id'] == i)
+    if (i == 9353) or (i == 10054) or (i == 9591) or (i == 10055):
+        continue
     # if (i == 2672):
     #   continue
 
@@ -218,7 +220,8 @@ uPrint('working on jplus data tile by tile... ', appendix='done')
 print 'final number of candidates: ', len(ra)
 
 
-#sys.exit()
+print 'The catalogue is not going to be saved!\n(to enable saving, check final part of code/selec_emitters.py)\n\n'
+sys.exit()
 #---------- FINAL CONVERSIONS ----------#
 uPrint('formatting ad saving jplus candidates catalogue... ', appendix=' ')
 tile = np.array(tile)
@@ -234,8 +237,8 @@ finalmask = ((ramask) & (decmask))
 new_jpl = jplus.tools.select_object(jpl, finalmask)
 
 new_jpl['redshift'] = (setup['zmean'])*np.ones(len(new_jpl['rJAVA'][:,0]))
-#sys.exit()
-dd.io.save(setup['jplus_candidates'], new_jpl) #save list
+
+#dd.io.save(setup['jplus_candidates'], new_jpl) #save list
 
 uPrint('formatting ad saving jplus candidates catalogue... ', appendix='done')
 

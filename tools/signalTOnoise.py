@@ -14,6 +14,7 @@ def jplus_SNratio(data, mask, band='J0395', SNcut=setup['SN'], magbin=setup['SNm
     for k in np.arange(maglim[0], maglim[1], magbin):
         if len(mask) == 0:
             cut = ((data[band][:,0] >= k) & (data[band][:,0] < k+magbin))
+            mask = np.ones(len(data['coords'][:,0]), dtype=bool)
         else:
             cut = ((mask) & (data[band][:,0] >= k) & (data[band][:,0] < k+magbin))
         if (len(data[band][cut,1]) < 3):
@@ -34,7 +35,7 @@ def jplus_SNratio(data, mask, band='J0395', SNcut=setup['SN'], magbin=setup['SNm
     test = ( (1./data[band][:,1]) < SNcut)
     if len(data[band][test,1]) < 20:   # 20 is arbitrary.
         print '\nS/N plot might be wrongly evaluated. Check plot and tools/signalTOnoise.py!'
-        #show_plt = True
+        mag_cut = 24. #EXTREMELY UNACCURATE!!!
         
     if show_plt == True:
         fig = plt.figure(figsize=(10,7))

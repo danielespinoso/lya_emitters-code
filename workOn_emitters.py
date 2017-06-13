@@ -1,4 +1,5 @@
 import sys
+import time
 import deepdish as dd
 import numpy as np
 import matplotlib.pylab as plt
@@ -22,36 +23,44 @@ from jplus.tools import crossmatch_angular as xmatch
 
 
 #--------------- LOADING DATASETS ---------------#
-jpl = dd.io.load(setup['jplus_candidates'])  # loads the list of candidates
-#alljpl = dd.io.load(setup['jplus_input'])   # loads the initial jplus catalogue
+jpl = dd.io.load(setup['jplus_candidates'])       # loads the list of candidates
+jpl['redshift'] = np.zeros(len(jpl['coords'][:,0]))
+#alljpl = dd.io.load(setup['jplus_input'])        # loads the initial jplus catalogue
     
 if setup['load_sdssGal'] == True:
-    sdss_gal = dd.io.load(setup['sdss_gal'])  #load sdss galaxies catalogue
+    sdss_gal = dd.io.load(setup['sdss_gal'])      #load sdss galaxies catalogue
 
 if setup['load_sdssQSO'] == True:
-    qso = dd.io.load(setup['sdss_qso'])
-    qso_zmask = ((qso['redshift'] > setup['zmin']) & (qso['redshift'] < setup['zmax']))
+    qso = dd.io.load(setup['sdss_qso'])           #load sdss quasars catalogue
+    qso_zmask = ((qso['zspec'] > setup['zmin']) & (qso['zspec'] < setup['zmax']))
     qso_z = jplus.tools.select_object(qso, qso_zmask)
     
+if setup['load_sdssSTAR'] == True:
+    sdss_str = dd.io.load(setup['sdss_str'])      #load sdss stars catalogue
+    
 if setup['load_gaia'] == True:
-    gaia = dd.io.load(setup['gaia'])          #load gaia stars catalogue
+    gaia = dd.io.load(setup['gaia'])              #load gaia stars catalogue
 
 if setup['load_mock_cd'] == True:
-    mock = dd.io.load(setup['mock_candidates'])
+    mock = dd.io.load(setup['mock_candidates'])   #load mocks catalogue
     
 if setup['galexmask'] == True:
-    galex = dd.io.load(setup['galex_in'])
+    galex = dd.io.load(setup['galex_in'])         #load galex catalogue
     
 if setup['load_rafa'] == True:
-    rafa = dd.io.load(setup['rafa'])          #load rafa catalog of HII regions in jplus
+    rafa = dd.io.load(setup['rafa'])              #load rafa catalog of HII regions in jplus
     
 if setup['load_lqac'] == True:
-    lqac = dd.io.load(setup['lqac'])          #load Large Qasar Astrometric Catalogue
-
-print '\nUsing '+setup['mag_type']+' mags'
+    lqac = dd.io.load(setup['lqac'])              #load Large Qasar Astrometric Catalogue
+    
+print '\n',time.strftime("%d/%m/%Y")
+print '---------- GENERAL INFO ----------'
+print 'Filter: ', setup['filters'][0]
+print 'Mag type: '+setup['mag_type']+' mags'
 print '\nList of loaded datasets:'
 if setup['load_sdssGal'] == True: print 'sdss galaxies'
 if setup['load_sdssQSO'] == True: print 'sdss quasars'
+if setup['load_sdssSTAR'] == True: print 'sdss stars'
 if setup['load_gaia'] == True: print 'overlapping gaia'
 if setup['load_mock_cd'] == True: print 'jplus mocks'
 if setup['galexmask'] == True: print 'galex sources'
@@ -61,31 +70,23 @@ if setup['load_lqac'] == True: print 'lqac catalogue'
 print '\nInitial candidates: ', len(jpl['coords'][:,0])
 
 
-# FOR ALESSANDRO:
-# jpl_foot_mask = ((sdss_gal['coords'][:,0] > 126.25) & (sdss_gal['coords'][:,0] < 141.25) &\
-#                  (sdss_gal['coords'][:,1] > 51.) & (sdss_gal['coords'][:,1] < 60.))
-# sdss_for_ale = jplus.tools.select_object(sdss_gal, jpl_foot_mask)
-
-# dist_sg, ind_sg = xmatch(sdss_for_ale['coords'], gaia['coords'], max_distance=3./3600.)
-# mask_sg = (dist_sg != np.inf)
-# print 'xmatch: ', len(sdss_for_ale['coords'][mask_sg,0])
-# print 'gaia: ', len(gaia['coords'][:,0])
-# print 'sdss: ', len(sdss_for_ale['coords'][:,0])
-
 
 
 
 #-------------- BB SIGNAL-to-NOISE SELECTION  --------------#
-mcutR = tools.jplus_SNratio(jpl, mask=[], band='rJAVA', SNcut=setup['SN']., show_plt=False)
-mcutG = tools.jplus_SNratio(jpl, mask=[], band='gJAVA', SNcut=setup['SN'], show_plt=False)
+# In general, this selection MUST be done tile-by-tile (JPLUS is not homogeneous). However, at this point in the whole
+# selection process, we don't have enough sources in order to properly compute magnitude cuts corresponding to a certain
+# S/N threshold for each tile. Instead of looking for the S/N-dependant mag_limit cut, then, I am directly comparing
+# the S/N of each source to a certain threshold (S/N=3) in order to include/exclude them from the final list.
 
-SNcutR_mask = (jpl['rJAVA'][:,0] < mcutR)
+SNcutR_mask = ( (1./jpl['rJAVA'][:,1]) > setup['SN'])
 jpl['over_rJAVA_cut'] = SNcutR_mask
 
-SNcutG_mask = (jpl['gJAVA'][:,0] < mcutG)
+SNcutG_mask = ( (1./jpl['gJAVA'][:,1]) > setup['SN'])
 jpl['over_gJAVA_cut'] = SNcutG_mask
 
 jpl['over_all_SNcuts'] = ((SNcutR_mask) & (SNcutG_mask))
+
 
 
 
@@ -129,7 +130,7 @@ if setup['load_sdssGal'] == True:
     sdss_gal_num =  len(jpl['coords'][sdss_gal_mask,0])
     sdss_gal_contam = int(10000.*sdss_gal_num/( len(jpl['coords'][:,0])) )/100.
     
-    jpl['redshift'][sdss_gal_mask] = sdss_gal['redshift'][ind_gal[sdss_gal_mask]]
+    jpl['redshift'][sdss_gal_mask] = sdss_gal['zspec'][ind_gal[sdss_gal_mask]]
     print 'Number of sdss galaxies (all z): ', sdss_gal_num
     print 'sdss_galaxies contamination: %2.2f'%sdss_gal_contam+'% (all-z galaxies)'
 
@@ -155,6 +156,22 @@ jpl['sdss_gal'] = sdss_gal_mask
 
 
 
+#-------------- SDSS STARS CROSSMATCH  --------------#
+if setup['load_sdssSTAR'] == True:
+    dist_str, ind_str = xmatch(jpl['coords'], sdss_str['coords'], max_distance=3./3600.)   # xmatch with candidates
+    starmask = (dist_str != np.inf)
+    starnum =  len(jpl['coords'][starmask,0])
+    nstr = 100.*starnum/(len(jpl['coords'][:,0]))
+    
+    print 'Number of sdss stars: ', starnum
+    print 'sdss_stars contamination: %2.2f'%nstr+'% '
+else:
+    starmask = np.zeros(len(jpl['coords'][:,0]), dtype=bool)
+jpl['sdss_stars'] = starmask
+
+
+
+
 #-------------- SDSS QUASARS CROSSMATCH  --------------#
 if setup['load_sdssQSO'] == True:
     # dist, ind = xmatch(alljpl['coords'],qso['coords'],max_distance=3./3600.) # xmatch with all jplus
@@ -162,6 +179,7 @@ if setup['load_sdssQSO'] == True:
     qsomask = (dist != np.inf)
     qsonum =  len(jpl['coords'][qsomask,0])
     n = 100.*qsonum/(len(jpl['coords'][:,0]))
+    jpl['redshift'][qsomask] = qso['zspec'][ind[qsomask]]   #using sdss redshift for jplus crossmatched sources
 
     dist_z, ind_z = xmatch(jpl['coords'], qso_z['coords'], max_distance=3./3600.) # right-z quasars
     qsomask_z = (dist_z != np.inf)
@@ -219,11 +237,10 @@ jpl['gaia'] = gaiamask
 
 
 # #-------------- CANDIDATE EXTENT  --------------#
-if setup['mag_type'] == 'auto':
-    print 'Extended objects: ', len(jpl['coords'][jpl['extended'],0])
-    print 'Compact objects: ', len(jpl['coords'][jpl['compact'],0])
+print 'Extended objects: ', len(jpl['coords'][jpl['extended'],0])
+print 'Compact objects: ', len(jpl['coords'][jpl['compact'],0])
 
-    
+
 
 
 #--------------  (QSO?) NB LINE EMISSIONS   --------------#
@@ -276,19 +293,33 @@ jpl['lya_lumin'] = lumilya
 
 
 
-#------------------  FLAGS AND CANDIDATE SELECTION ------------------#
-flags = ['in_galex', 'sdss_gal', 'sdss_qso', 'sdss_rightZ_qso', 'compact', 'extended',\
-         'J0660_liners', 'J0861_liners', 'J0410_liners', 'J0430_liners', 'J0515_liners',\
-         'all_liners', 'gaia', 'HII_region', 'lqac_qso']
-candidates = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & \
-               (~jpl['sdss_rightZ_qso']) & (jpl['compact']) & (~jpl['all_liners']) &\
-               (~jpl['gaia']) )
+#------------------  CANDIDATES SELECTION  ------------------#
+candidates = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & (~jpl['sdss_stars']) & \
+               (~jpl['lqac_qso']) & (~jpl['all_liners']) & (~jpl['gaia']) )
 
-print 'Final candidates number: ', len(jpl['coords'][candidates,0]),'\n\n'
+if setup['morph_sel'] == 'extd':
+    candidates = ( (candidates) & (jpl['extended']) )
+else:
+    candidates = ( (candidates) & (jpl['compact']) )
+
+    
+if setup['morph_sel'] == 'extd': print '\n---------- EXTENDED ----------'
+if setup['morph_sel'] == 'comp': print '\n---------- COMPACT ----------'
+print 'Candidates are defined as:'
+if setup['galexmask'] == True: print '- NOT in Galex'
+if setup['load_sdssGal'] == True: print '- NOT sdss galaxies'
+if setup['load_sdssQSO'] == True: print '- NOT sdss QSOs'
+if setup['load_sdssSTAR'] == True: print '- NOT sdss stars'
+if setup['load_lqac'] == True: print '- NOT in LQAC'
+if setup['load_gaia'] == True: print '- NOT gaia stars'
+print '- NOT "liners"'
+if setup['morph_sel'] == 'extd': print 'EXTENDED objects\n'
+if setup['morph_sel'] == 'comp': print 'COMPACT objects\n'
 
 over_SN = ((candidates) & (jpl['over_all_SNcuts']))
-print 'Over all SN cuts:', len(jpl['coords'][over_SN,0]),'\n\n'
+print 'Final candidates number: ', len(jpl['coords'][candidates,0]),'; (', len(jpl['coords'][over_SN,0]),'of which are above all BB S/N cuts)','\n\n'
 
+#sys.exit()
 
 
 #-------------------------   PLOTS   -------------------------#
@@ -315,8 +346,8 @@ print 'Over all SN cuts:', len(jpl['coords'][over_SN,0]),'\n\n'
 # tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, objectid-1, mask=jpl['sdss_rightZ_qso'], units='flux', zfromSDSS=False)
 
 # #PLOT MEDIAN SPECTRA
-mask_med_spec = jpl['sdss_rightZ_qso']
-tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='QSOs SDSS median Photo-spectrum')
+# mask_med_spec = jpl['sdss_rightZ_qso']
+# tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='QSOs SDSS median Photo-spectrum')
 
 # candidates2 = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & \
 #                (~jpl['sdss_rightZ_qso']) & (jpl['extended']) & (~jpl['all_liners']) &\
@@ -327,23 +358,21 @@ tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='QSOs SD
 # tools.plot_JPLUS_results.plot_MEDspectra_diff(jpl, mask1=mask_med_spec, mask2=mask_med_spec2, titol='Difference median Photo-spectrum')
 
 
-sys.exit()
 
 
 
 
+#--------------------------------  DATA SAVING  --------------------------------#
+all_final = jplus.tools.select_object(jpl, candidates)       # all candidates (excluding QSOs, galaxies, liners... see definition of "candidates" mask, above)
+final = jplus.tools.select_object(jpl, over_SN)              # same as above but including only candidates above Broad-Band S/N cuts
 
+#HDF5 catalogues
+dd.io.save(setup['final_catalog'], all_final)                # all candidates (excluding QSOs, galaxies, liners...)
+dd.io.save(setup['final_catalog'][:-3]+'_overSN.h5', final)  # only candidates above Broad-Band S/N cuts
+dd.io.save(setup['flagged_catalog'], jpl)                    # ALL candidates (excluding nothing: this rewrites the input, adding the selection flags)
 
-#-----------------------  DATA SAVING  -----------------------#
-#sys.exit()
-
-all_final = jplus.tools.select_object(jpl, candidates)
-final = jplus.tools.select_object(jpl, over_SN)
-dd.io.save(setup['final_catalog'], all_final)
-dd.io.save(setup['final_catalog'][:-3]+'_overSN.h5', final)
-dd.io.save(setup['flagged_catalog'], jpl)
-
-matrix = np.empty( (8, len(jpl['coords'][candidates,0])) )
+#ASCII tables
+matrix = np.empty( (8, len(jpl['coords'][candidates,0])) )   # all candidates (excluding QSOs, galaxies, liners...)
 matrix[0,:] = jpl['tile_id'][candidates]
 matrix[1,:] = jpl['coords'][candidates,0]
 matrix[2,:] = jpl['coords'][candidates,1]
@@ -356,21 +385,20 @@ head = 'tl   ra        dec    NBmag line_flux line_lum  rJAVA  z_NB'
 fmt_string = '%4d %3.5f %3.5f %4.2f %4.3e %4.3e %4.2f %4.3f'
 np.savetxt(setup['final_list'], matrix.T, fmt=fmt_string, header=head)
 
-
-matrix = np.empty( (2, len(jpl['coords'][candidates,0])) )
+matrix = np.empty( (2, len(jpl['coords'][candidates,0])) )   # RA-DEC of all candidates (excluding QSOs, galaxies, liners...)
 matrix[0,:] = jpl['coords'][candidates,0]
 matrix[1,:] = jpl['coords'][candidates,1]
 head = 'ra        dec'
 fmt_string = '%3.5f %3.5f'
 np.savetxt(setup['final_radec'], matrix.T, fmt=fmt_string, header=head)
 
-
-matrix = np.empty( (2, len(jpl['coords'][over_SN,0])) )
+matrix = np.empty( (2, len(jpl['coords'][over_SN,0])) )      # RA-DEC of candidates above Broad-Band S/N cuts
 matrix[0,:] = jpl['coords'][over_SN,0]
 matrix[1,:] = jpl['coords'][over_SN,1]
 head = 'ra        dec'
 fmt_string = '%3.5f %3.5f'
 np.savetxt(setup['final_radec_overSN'], matrix.T, fmt=fmt_string, header=head)
+
 sys.exit()
 
 
@@ -384,3 +412,16 @@ propVol = False
 tools.plot_JPLUS_results.plot_lumiFunc(fsky, line, propVol)
 
 sys.exit()
+
+
+
+# FOR ALESSANDRO:
+# jpl_foot_mask = ((sdss_gal['coords'][:,0] > 126.25) & (sdss_gal['coords'][:,0] < 141.25) &\
+#                  (sdss_gal['coords'][:,1] > 51.) & (sdss_gal['coords'][:,1] < 60.))
+# sdss_for_ale = jplus.tools.select_object(sdss_gal, jpl_foot_mask)
+
+# dist_sg, ind_sg = xmatch(sdss_for_ale['coords'], gaia['coords'], max_distance=3./3600.)
+# mask_sg = (dist_sg != np.inf)
+# print 'xmatch: ', len(sdss_for_ale['coords'][mask_sg,0])
+# print 'gaia: ', len(gaia['coords'][:,0])
+# print 'sdss: ', len(sdss_for_ale['coords'][:,0])

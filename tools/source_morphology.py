@@ -49,7 +49,8 @@ def evaluate_morphology(data, extent, mask_tile, tilenum):
                 
             if shape > 0.02: 
                 if i > lims[0]:
-                    p0 = [10., mean_pb[0], 0.2]
+                    #p0 = [10., mean_pb[0], 0.2]
+                    p0 = [10., mean, 0.2]
                 else :
                     p0 = [10., mean, 0.2]
                 amp, mean, stdv = FGtH(extent[sliced], (ylims[0], mean), bb/2, p0, guess_from_avg=False, show_plot=plot_by_slice)

@@ -30,7 +30,7 @@ def set_up():
     #----------------------------------#
     #----------  PARAMETERS  ----------#
     #----------------------------------#
-    setup['filters'] = ['J0378', 'uJAVA', 'gJAVA']         # filters in this order: NB, BBc, BBuc
+    setup['filters'] = ['J0395', 'uJAVA', 'gJAVA']         # filters in this order: NB, BBc, BBuc
     za, zb = zl(band=setup['filters'][0], wlength=1215.67) # redshift limits corresponding to NB filter
     setup['zmin'] = za
     setup['zmax'] = zb
@@ -56,12 +56,13 @@ def set_up():
     setup['morph_fact'] = 2.    # factor to multiply the error-fit and set the morphological limit
 
         
-    setup['mag_type'] = 'aper'  # set 'auto' or 'aper' to select auto-mag or aper-mag(3") catalogue
-    setup['jpl_overwr'] = False # if 'True' the jplus catalogue gets downloaded again from jplus website (my catalogue in lya_emitters/datasets/ gets also overwritten). Set to True after UPAD updates
+    setup['mag_type'] = 'aper'   # set 'auto' or 'aper' to select auto-mag or aper-mag(3") catalogue
+    setup['jpl_overwr'] = False  # if 'True' the jplus catalogue gets downloaded again from jplus website (my catalogue in lya_emitters/datasets/ gets also overwritten). Set to True after UPAD updates
     setup['my_overwr'] = False   # if 'True' the jplus input catalogue in lya_emitters/datasets/ gets overwritten
-    setup['method'] = '2FM'     # method for NB-excess computation (choose '3FM' otherwise)
-    setup['sdssPhot'] = False   # if 'True' data_reader.py (called from select_emitters.py) x-matches jplus with sdss and substitutes sdss photometry to jplus' one
-    setup['galexmask'] = False  # if 'True' only sources NOT in galex will be finally selected
+    setup['method'] = '2FM'      # method for NB-excess computation (choose '3FM' otherwise)
+    setup['sdssPhot'] = False    # if 'True' data_reader.py (called from select_emitters.py) x-matches jplus with sdss and substitutes sdss photometry to jplus' one
+    setup['galexmask'] = False   # if 'True' only sources NOT in galex will be finally selecte
+    setup['morph_sel'] = 'comp'  # set 'extd' or 'comp' to respectively select extended or compact sources during the final selection (workOn_emitters.py)
 
         
 
@@ -81,9 +82,9 @@ def set_up():
     
     # JPLUS CANDIDATES - binary files produced by select_emitters.py on which 'workON_emitters.py' operates
     if setup['mag_type'] == 'aper':
-        setup['jplus_candidates'] = setup['data']+'candidates_jplus_'+setup['filters'][0]+'aperMag_'+setup['method']+'.h5'
+        setup['jplus_candidates'] = setup['data']+'firstSelection_'+setup['filters'][0]+'_aperMag_'+setup['method']+'.h5'
     elif setup['mag_type'] == 'auto':
-        setup['jplus_candidates'] = setup['data']+'candidates_jplus_'+setup['filters'][0]+'autoMag_'+setup['method']+'.h5'
+        setup['jplus_candidates'] = setup['data']+'firstSelection_'+setup['filters'][0]+'_autoMag_'+setup['method']+'.h5'
 
     
 
@@ -94,11 +95,11 @@ def set_up():
     setup['load_mock_cd'] = False      # if 'True' mock candidates get loaded (workOn_emitters.py)
     setup['load_gaia'] = False         # if 'True' gaia stars get loaded (for morphology analysis)
     setup['load_lqac'] = True          # if 'True' LQAC quasars get loaded (for crossmatch)
-    setup['load_rafa'] = True          # if 'True' Rafa's HII regions get loaded (for crossmatch)
+    setup['load_rafa'] = False         # if 'True' Rafa's HII regions get loaded (for crossmatch)
     
-    setup['load_sdssGal'] = False       # if 'True' sdss galaxies catalogue gets loaded (everywhere)
-    setup['load_sdssQSO'] = False       # if 'True' sdss quasars catalogue gets loaded (everywhere)
-    setup['load_sdssSTAR'] = False      # if 'True' sdss stars catalogue gets loaded (everywhere)
+    setup['load_sdssGal'] = True       # if 'True' sdss galaxies catalogue gets loaded (everywhere)
+    setup['load_sdssQSO'] = True       # if 'True' sdss quasars catalogue gets loaded (everywhere)
+    setup['load_sdssSTAR'] = True      # if 'True' sdss stars catalogue gets loaded (everywhere)
 
 
         
@@ -131,7 +132,7 @@ def set_up():
 
     # TILE_IMAGE INFO INPUT
     setup['img_input'] = setup['data']+'jplus_tile_image_(03-05-2017).h5'
-        
+
 
         
     #--------------------------------------#
@@ -139,22 +140,14 @@ def set_up():
     #--------------------------------------#
     
     # FINAL CANDIDATES OUTPUTS - ascii tables of selected candidates' parameters
-    if setup['mag_type'] == 'auto':
-        setup['final_catalog'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_'+setup['method']+'.h5'
-        setup['flagged_catalog'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_FLAGS_'+setup['method']+'.h5'
-        setup['final_list'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_allpars_'+setup['method']+'.txt'
-        setup['final_radec'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_RaDec_'+setup['method']+'.txt'
-        setup['final_radec_overSN'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_autoMags_RaDec_overSN'+setup['method']+'.txt'
-    elif setup['mag_type'] == 'aper':
-        setup['final_catalog'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_'+setup['method']+'.h5'
-        setup['flagged_catalog'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_FLAGS_'+setup['method']+'.h5'
-        setup['final_list'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_allpars_'+setup['method']+'.txt'
-        setup['final_radec'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_RaDec_'+setup['method']+'.txt'
-        setup['final_radec_overSN'] = setup['results'] + 'candidates_'+setup['filters'][0]+'_aperMags_RaDec_overSN'+setup['method']+'.txt'
+    setup['flagged_catalog'] =    setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+'_FLAGS'+'.h5'
+    setup['final_catalog'] =      setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'.h5'
+    setup['final_list'] =         setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_allpars'+'.txt'
+    setup['final_radec'] =        setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_RaDec'+'.txt'
+    setup['final_radec_overSN'] = setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_RaDec_overSN'+'.txt'
         
     # GALEX OUTPUT - list of jplus-galex x-matched sources. 'workON_emitters.py' will exclude them.
-    setup['galex_list'] = setup['jplus_candidates'][:(len(setup['jplus_candidates'])-3)] +\
-                          '_galexCROSSMATCHEDsources.csv'
+    setup['galex_list'] = setup['jplus_candidates'][:(len(setup['jplus_candidates'])-3)]+'_galexCROSSMATCHEDsources.csv'
 
 
 
