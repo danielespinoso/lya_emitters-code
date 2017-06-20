@@ -278,7 +278,6 @@ jpl['all_liners'] = lines_mask
 
 
 
-
 #----------------------  Lya LUMINOSITIES  ----------------------#
 fluxlya, fcont, flux_nb, fcont_error = tools.threeFM.jplus3FM(jpl)
 comov_table = setup['tools'] + 'comoving_distance.txt'
@@ -289,13 +288,14 @@ dl = dl*(1.e6)*3.0856e18              #now in cm
 lumilya = 4.*np.pi*fluxlya*(dl**2.)   #now in erg/s
 
 jpl['lya_lumin'] = lumilya
+print min(lumilya), max(lumilya)
 
 
 
 
 #------------------  CANDIDATES SELECTION  ------------------#
 candidates = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & (~jpl['sdss_stars']) & \
-               (~jpl['lqac_qso']) & (~jpl['all_liners']) & (~jpl['gaia']) )
+              (~jpl['lqac_qso']) & (~jpl['all_liners']) & (~jpl['gaia']) )
 
 if setup['morph_sel'] == 'extd':
     candidates = ( (candidates) & (jpl['extended']) )
@@ -317,26 +317,159 @@ if setup['morph_sel'] == 'extd': print 'EXTENDED objects\n'
 if setup['morph_sel'] == 'comp': print 'COMPACT objects\n'
 
 over_SN = ((candidates) & (jpl['over_all_SNcuts']))
-print 'Final candidates number: ', len(jpl['coords'][candidates,0]),'; (', len(jpl['coords'][over_SN,0]),'of which are above all BB S/N cuts)','\n\n'
+print 'Final candidates number: ', len(jpl['coords'][candidates,0]),'; (', len(jpl['coords'][over_SN,0]),'of which are above all BB S/N cuts)','\n'
 
+
+
+
+#--------------  LOW-Z OII EMITTERS   --------------#
+if setup['filters'][0] == 'J0378':
+    
+    #------- COLOR-COLOR PLOT -------#
+    clrx = ['gJAVA', 'rJAVA']
+    clry = ['iJAVA', 'zJAVA']
+    OIIx = jpl[clrx[0]][jpl['J0660_liners'],0] - jpl[clrx[1]][jpl['J0660_liners'],0]
+    OIIy = jpl[clry[0]][jpl['J0660_liners'],0] - jpl[clry[1]][jpl['J0660_liners'],0]
+    allx = jpl[clrx[0]][:,0] - jpl[clrx[1]][:,0]
+    ally = jpl[clry[0]][:,0] - jpl[clry[1]][:,0]
+    candsx = jpl[clrx[0]][candidates,0] - jpl[clrx[1]][candidates,0]
+    candsy = jpl[clry[0]][candidates,0] - jpl[clry[1]][candidates,0]
+    f = plt.figure(figsize=(12,10))
+    plt.plot(OIIx, OIIy, 'ob', markersize=6, alpha=0.8, label='OII_em')
+    plt.plot(candsx, candsy, 'or', markersize=6, alpha=0.4, label='candidates')
+    #plt.plot(allx, ally, 'og', markersize=3, alpha=0.2, label='all')
+    plt.xlabel(clrx[0]+' - '+clrx[1]+'  [mags]', fontsize=14)
+    plt.ylabel(clry[0]+' - '+clry[1]+'  [mags]', fontsize=14)
+    plt.legend(fontsize=14, fancybox=True)
+    plt.title('OII vs candidates  color plot', fontsize=17)
+    #plt.savefig(setup['plots']+'OII_emitters/OIIemitrs_'+clrx[0][0]+clrx[1][0]+'-'+clry[0][0]+clry[1][0]+'JAVA.png')
+    #plt.show()
+    plt.close()
+
+    #------- COMPOSITE SPECTRUM -------#
+    tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=jpl['J0660_liners'], titol='OII emitters median photo-spectrum')
+    tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=jpl['extended'], titol='extended candidates median photo-spectrum')
+    
+    #------- SOME STATISTICS -------#
+    print '------- OII emittters -------'
+    print 'Total number: ',len(jpl['rJAVA'][jpl['J0660_liners'],0])
+
+    test = ((jpl['J0660_liners']) & (jpl['extended']))
+    print 'Extended: ',len(jpl['rJAVA'][test,0])
+    test = ((jpl['J0660_liners']) & (jpl['compact']))
+    print 'Compact: ',len(jpl['rJAVA'][test,0])
+
+    #frac = float( len(jpl['rJAVA'][jpl['J0660_liners'],0]) )/len(jpl['rJAVA'][jpl['extended'],0])
+    #print 'Fraction over extended: %2.2f' %frac
+    frac = float(len(jpl['rJAVA'][jpl['J0660_liners'],0]))/len(jpl['rJAVA'][:,0])
+    print 'Fraction over all: %2.2f'%frac
+
+    #------- GALEX CROSSMATCH -------#
+    matrix = np.empty( (2, len(jpl['coords'][jpl['J0660_liners'],0])) )      # RA-DEC list of OII emitters
+    matrix[0,:] = jpl['coords'][jpl['J0660_liners'],0]
+    matrix[1,:] = jpl['coords'][jpl['J0660_liners'],1]
+    fmt_string = '%3.5f %3.5f'
+    #np.savetxt(setup['results']+'OII-emitters_RA-DEC_list.csv', matrix.T, fmt=fmt_string)
+    gal_ra,gal_dec = np.genfromtxt(setup['data']+'OII-emitters_GALEX-(All_IR_Sky)_xmatch_19-06-2017.csv', delimiter=',', skip_header=1, usecols=(1,2), unpack=True)
+    print 'In galex: '+str(1)+' over '+str(len(jpl['rJAVA'][jpl['J0660_liners'],0]))+'\nxmatch coords: ',str(gal_ra.T)+' '+str(gal_dec.T)
+else:
+    '\nNo OII_emitters analysis, we need J0378 filter!\n'
+
+
+
+
+    
+#--------   GET THE QUASARS BY THEIR COLORS!   --------#
+print '\n\n'
+#add_mask = ((jpl['extended']) & (~jpl['sdss_qso']) )
+com_mask = ((jpl['compact']) & (~jpl['sdss_qso']) & (~jpl['all_liners']) & (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_stars']) & (~jpl['lqac_qso']) & (~jpl['all_liners']) & (~jpl['gaia']) )
+ext_mask = ((jpl['extended']) & (~jpl['sdss_qso']) & (~jpl['all_liners']) & (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_stars']) & (~jpl['lqac_qso']) & (~jpl['all_liners']) & (~jpl['gaia']) )
+plt.figure(figsize=(12,10))
+fx = ['gJAVA', 'rJAVA']
+fy = ['gJAVA', 'iJAVA']
+xcol = jpl[fx[0]][:,0] - jpl[fx[1]][:,0]
+ycol = jpl[fy[0]][:,0] - jpl[fy[1]][:,0]
+#--- color-cut criterion ---#
+on_QSO = True  #if 'True' the following color cut will be fine-tuned in order to select SDSS QSOs with high completeness and purity, if 'False' the color cut will be defined on extended emitters
+if (setup['filters'][0] == 'J0378') or (setup['filters'][0] == 'J0395'):
+    if on_QSO == True:
+        for i in np.arange(0, 1.6, 0.2):
+            coul = (i/1.41, 0.1, 0.8) #, 0.7, 0.4)
+            cut = ((xcol < i) & (ycol < i))    # QSOs criterion
+            qsos_above = ((cut) & (jpl['sdss_qso']) )
+            sources_above = ((cut) & (ext_mask))
+            complet = round( float(len(xcol[qsos_above]))/len(xcol[jpl['sdss_qso']])*100. , 2)
+            purit = round( float(len(xcol[qsos_above]))/(len(xcol[qsos_above]) + len(xcol[sources_above]))*100. , 2)
+            plt.plot((i, i), (-0.9, i), color=coul, linestyle='--', linewidth=1.5)
+            plt.plot((-2.4, i), (i, i), color=coul, linestyle='--', linewidth=1.5)
+            plt.text(i-0.08, -1., 'cut:', color=coul, fontweight='bold', fontsize=8)
+            plt.text(i-0.08, -1.1, str(i), color=coul, fontweight='bold', fontsize=8)
+            plt.text(-2.4, i+0.03, 'Comp: '+str(complet)+'%', color=coul, fontweight='bold', fontsize=9)
+            plt.text(-1.5, i+0.03, 'Pur: '+str(purit)+'%', color=coul, fontweight='bold', fontsize=9)
+        # another limit, by hand
+        cut = ((xcol < 0.5) & (ycol < 1.0))    # QSOs criterion
+        qsos_above = ((cut) & (jpl['sdss_qso']) )
+        sources_above = ((cut) & (ext_mask))
+        complet = round( float(len(xcol[qsos_above]))/len(xcol[jpl['sdss_qso']])*100. , 2)
+        purit = round( float(len(xcol[qsos_above]))/(len(xcol[qsos_above]) + len(xcol[sources_above]))*100. , 2)
+        plt.plot((0.5, 0.5), (-1.5, 1.0), 'k--', linewidth=1.5)
+        plt.plot((-2.4, 0.5), (1.0, 1.0), 'k--', linewidth=1.5)
+        plt.text(0.55, -1.5, 'Comp: '+str(complet)+'%'+'  Pur: '+str(purit)+'%', color='k', fontweight='bold', fontsize=10)
+    else:
+        for i in np.arange(0, 1.1, 0.2):
+            coul = (i, 0.7, 0.4)
+            cut = ((xcol > i) & (ycol > i))
+            qsos_above = ((cut) & (jpl['sdss_qso']) )
+            sources_above = ((cut) & (ext_mask))
+            complet = round( float(len(xcol[sources_above]))/len(xcol[ext_mask])*100. , 2)
+            purit = round( float(len(xcol[sources_above]))/(len(xcol[qsos_above]) + len(xcol[sources_above]))*100. , 2)
+            plt.plot((i, i), (i, 3.5), color=coul, linestyle='--', linewidth=2)
+            plt.plot((i, 2.6), (i, i), color=coul, linestyle='--', linewidth=2)
+            plt.text(i, 3.7, 'cut:', color=coul, fontweight='bold', fontsize=9)
+            plt.text(i, 3.6, str(i), color=coul, fontweight='bold', fontsize=9)
+            plt.text(2.7, i, 'Comp: '+str(complet)+  '   Pur: '+str(purit), color=coul, fontweight='bold', fontsize=9)
+        plt.plot(xcol[~jpl['sdss_qso']], ycol[~jpl['sdss_qso']], 'og', markersize=2, alpha=0.3, label='all NOT-QSOs')  # ALL not-QSO sources
+        
+plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'or', markersize=4, alpha=0.6, label='SDSS right_z QSOs')
+not_rightZ_qso = ((jpl['sdss_qso']) & (~jpl['sdss_rightZ_qso']))
+plt.plot(xcol[not_rightZ_qso], ycol[not_rightZ_qso], 'xk', markersize=4, alpha=0.98, label='SDSS "wrong"_z QSOs')
+plt.plot(xcol[ext_mask], ycol[ext_mask], 'ob', markersize=4, alpha=0.8, label='extended candidates')
+plt.plot(xcol[com_mask], ycol[com_mask], 'og', markersize=2, alpha=0.6, label='compact candidates')
+plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]')
+plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]')
+plt.legend(fancybox=True)
+plt.title('Color-color cut to discard QSOs (data from '+setup['filters'][0]+' filter)', fontsize=16)
+# if on_QSO == True:
+#     plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCutsOnQSOs_withCompact'+setup['filters'][0]+'.png')
+#     a = 1
+# else:
+#     plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCuts_'+setup['filters'][0]+'.png')
+#     a = 1
+#plt.show()
+plt.close()
 #sys.exit()
+
+
+
+
+
 
 
 #-------------------------   PLOTS   -------------------------#
 # #FLAG-ORIENTED COLOR-COLOR
 # fig = plt.figure(figsize=(12,10))
-# fx = ['uJAVA', 'gJAVA']
-# fy = ['gJAVA', 'rJAVA']
+# fx = ['gJAVA', 'rJAVA']
+# fy = ['rJAVA', 'iJAVA']
 # xcol = jpl[fx[0]][:,0] - jpl[fx[1]][:,0]
 # ycol = jpl[fy[0]][:,0] - jpl[fy[1]][:,0]
-# #plt.plot(xcol[jpl['sdss_qso']], ycol[jpl['sdss_qso']], 'or', markersize=4, alpha=0.5, label='all SDSS QSOs')
-# plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'om', markersize=4, alpha=0.8, label='SDSS QSOs z=2.1')
-# plt.plot(xcol[over_SN], ycol[over_SN], 'ob', markersize=4, alpha=0.3, label='extd over all SNcuts')
-# #plt.plot(xcol[jpl['gaia']], ycol[jpl['gaia']], 'og', markersize=4, alpha=0.5, label='gaia')
+# plt.plot(xcol[jpl['sdss_qso']], ycol[jpl['sdss_qso']], 'or', markersize=4, alpha=0.3, label='all SDSS QSOs')
+# #plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'om', markersize=4, alpha=0.8, label='SDSS QSOs z=2.1')
+# plt.plot(xcol[~jpl['sdss_qso']], ycol[~jpl['sdss_qso']], 'og', markersize=2, alpha=0.3, label='all NOT-QSOs')
 # plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]')
 # plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]')
 # #plt.axis([-1, 2, -0.5, 2.5])
-# plt.legend()
+# plt.legend(fancybox=True)
+# plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor.png')
 # plt.show()
 # plt.close()
 # sys.exit()
@@ -345,7 +478,7 @@ print 'Final candidates number: ', len(jpl['coords'][candidates,0]),'; (', len(j
 # objectid = 6
 # tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, objectid-1, mask=jpl['sdss_rightZ_qso'], units='flux', zfromSDSS=False)
 
-# #PLOT MEDIAN SPECTRA
+# #PLOT MEDIAN SPECTRA ("""COMPOSITE""")
 # mask_med_spec = jpl['sdss_rightZ_qso']
 # tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='QSOs SDSS median Photo-spectrum')
 
@@ -356,7 +489,6 @@ print 'Final candidates number: ', len(jpl['coords'][candidates,0]),'; (', len(j
 
 # tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec2, titol='Extended candidates median Photo-spectrum')
 # tools.plot_JPLUS_results.plot_MEDspectra_diff(jpl, mask1=mask_med_spec, mask2=mask_med_spec2, titol='Difference median Photo-spectrum')
-
 
 
 
@@ -403,7 +535,7 @@ sys.exit()
 
 
 #--------------- PLOT LUMINOSITY FUNCTION ---------------#
-n_tiles = 53
+n_tiles = 205
 jplus_area = (1.4**2.)*n_tiles #now in sq.degrees
 sphere_area = 4*np.pi/((np.pi/180.)**2.) #now in sq.degrees
 fsky = jplus_area/sphere_area
@@ -411,7 +543,7 @@ fsky = jplus_area/sphere_area
 propVol = False
 tools.plot_JPLUS_results.plot_lumiFunc(fsky, line, propVol)
 
-sys.exit()
+#sys.exit()
 
 
 

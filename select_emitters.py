@@ -155,10 +155,8 @@ print '\nNumber of tiles to analyse: ', len(set(jpl['tile_id']))
 for i in set(jpl['tile_id']):
     uPrint('working on jplus data tile by tile... now: ',appendix=str(int(i)) )
     tilemask = (jpl['tile_id'] == i)
-    if (i == 9353) or (i == 10054) or (i == 9591) or (i == 10055):
-        continue
-    # if (i == 2672):
-    #   continue
+    # if (i != 9859):
+    #     continue
 
     #-----------  JPLUS SIGMA LINE  -----------#
     continuum = np.array([mag_cont[tilemask], mag_cont_error[tilemask]]).T
@@ -178,13 +176,16 @@ for i in set(jpl['tile_id']):
     colcol_mask = ((bbc_color > bbc_cut) & (bbuc_color > bbuc_cut))
 
     #-------------- SOURCE EXTENT  --------------#
-    pp = tools.evaluate_morphology(jpl, extdness, tilemask, i) 
+    pp = tools.evaluate_morphology(jpl, extdness, tilemask, i, plot_by_slice=False)
     border = setup['morph_fact'] * (pp[2] + (10.**(pp[3]*jpl['rJAVA'][:,0]+pp[4])) )\
              + (pp[0] + pp[1]*jpl['rJAVA'][:,0])
     extended_mask = ((extdness > border) & (tilemask))
-    compact_mask = ((extdness <= border) & (tilemask))        
+    compact_mask = ((extdness <= border) & (tilemask))
     jpl['extended'] = ((jpl['extended']) | (extended_mask))
     jpl['compact'] = ((jpl['compact']) | (compact_mask))
+    # extended_mask = np.ones(len(tilemask), dtype=bool)
+    # compact_mask = np.ones(len(tilemask), dtype=bool)
+    # pp = [30, -0.01, 1., 0.4, 40.]
     
     #---------- FINAL CANDIDATES LIST FOR CURRENT TILE ----------#
     totalmask = ((tilemask) & (sigma_mask) & (snratio_mask) & (colcol_mask) )

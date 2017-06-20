@@ -61,8 +61,8 @@ def set_up():
     setup['my_overwr'] = False   # if 'True' the jplus input catalogue in lya_emitters/datasets/ gets overwritten
     setup['method'] = '2FM'      # method for NB-excess computation (choose '3FM' otherwise)
     setup['sdssPhot'] = False    # if 'True' data_reader.py (called from select_emitters.py) x-matches jplus with sdss and substitutes sdss photometry to jplus' one
-    setup['galexmask'] = False   # if 'True' only sources NOT in galex will be finally selecte
-    setup['morph_sel'] = 'comp'  # set 'extd' or 'comp' to respectively select extended or compact sources during the final selection (workOn_emitters.py)
+    setup['galexmask'] = True   # if 'True' only sources NOT in galex will be finally selecte
+    setup['morph_sel'] = 'extd'  # set 'extd' or 'comp' to respectively select extended or compact sources during the final selection (workOn_emitters.py)
 
         
 
@@ -140,11 +140,11 @@ def set_up():
     #--------------------------------------#
     
     # FINAL CANDIDATES OUTPUTS - ascii tables of selected candidates' parameters
-    setup['flagged_catalog'] =    setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+'_FLAGS'+'.h5'
-    setup['final_catalog'] =      setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'.h5'
-    setup['final_list'] =         setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_allpars'+'.txt'
-    setup['final_radec'] =        setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_RaDec'+'.txt'
-    setup['final_radec_overSN'] = setup['results']+'candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_RaDec_overSN'+'.txt'
+    setup['flagged_catalog'] =    setup['results']+setup['filters'][0]+'_candidates/candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+'FLAGS'+'.h5'
+    setup['final_catalog'] =      setup['results']+setup['filters'][0]+'_candidates/candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'.h5'
+    setup['final_list'] =         setup['results']+setup['filters'][0]+'_candidates/candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_allpars'+'.txt'
+    setup['final_radec'] =        setup['results']+setup['filters'][0]+'_candidates/candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_RaDec'+'.txt'
+    setup['final_radec_overSN'] = setup['results']+setup['filters'][0]+'_candidates/candidates_'+setup['method']+'_'+setup['filters'][0]+'_'+setup['mag_type']+'Mags_'+setup['morph_sel']+'_RaDec_overSN'+'.txt'
         
     # GALEX OUTPUT - list of jplus-galex x-matched sources. 'workON_emitters.py' will exclude them.
     setup['galex_list'] = setup['jplus_candidates'][:(len(setup['jplus_candidates'])-3)]+'_galexCROSSMATCHEDsources.csv'
