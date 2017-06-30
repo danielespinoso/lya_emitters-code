@@ -1,0 +1,100 @@
+import sys
+import time
+import deepdish as dd
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+#####################  ATTENTION  ####################
+# This code reads a general CSV input and formats
+# it into a python dictionary (each column becomes a
+# key in the dictionary). Obviously the exact structure
+# of the input file can differ each time, thus some
+# parameters/variables must be enabled/disabled
+# manually depending on the input.
+######################################################
+
+
+#----------------------#
+#       SETTINGS       #
+#----------------------#
+inp = '/home/CEFCA/dspinoso/works/lya_emitters/datasets/edr.csv'
+out = '/home/CEFCA/dspinoso/works/lya_emitters/datasets/jplus_allTOr24_aperMags_upad_dual_EDR.h5'
+
+
+#------------------------#      Only for .csv data retrived from JPLUS catalogue:
+#    LOAD AND CONVERT    #         - the first row contains the query text used to retrive the data
+#------------------------#         - the second row contains the names of the columns
+
+with open(inp, 'r') as f:
+    query_text = f.readline()    # reading input first line
+    names = f.readline()         # reading input second line
+f.close()
+
+#names = names.lower()           # if we want lower-case dictionary keys
+kys = names[1:-2].split('","')   # formatting dictionary keys
+
+data = np.genfromtxt(inp, delimiter=',', skip_header=2, unpack=False) # reading actual data
+
+dummy = np.zeros(len(data[:,4]), dtype= np.int)  #converting tile_ids into int (the only way it works)
+for i in range(len(data[:,4])):
+    dummy[i] = data[i,4]
+
+table = {
+    'coords'    : np.array( [data[:,0],data[:,1]] ).T,
+    'fwhm'	: np.array(data[:,2]),
+    'cstar'	: np.array(data[:,3]),
+    'tile_id'	: dummy,
+    'object_id'	: np.array(data[:,5]),
+    'kron_rad'	: np.array(data[:,6]),
+    'petro_rad'	: np.array(data[:,7]),
+    'mu_max_r'	: np.array(data[:,8]),
+    'mag_auto_r': np.array(data[:,47]),
+    'ISOAREA_WORLD': np.array(data[:,50]),
+    'uJAVA'	: np.array( [data[:,11],data[:,12]] ).T,
+    'gJAVA'	: np.array( [data[:,13],data[:,14]] ).T,
+    'rJAVA'	: np.array( [data[:,15],data[:,16]] ).T,
+    'iJAVA'	: np.array( [data[:,17],data[:,18]] ).T,
+    'zJAVA'	: np.array( [data[:,19],data[:,20]] ).T,
+    'J0378'	: np.array( [data[:,21],data[:,22]] ).T,
+    'J0395'	: np.array( [data[:,23],data[:,24]] ).T,
+    'J0410'	: np.array( [data[:,25],data[:,26]] ).T,
+    'J0430'	: np.array( [data[:,27],data[:,28]] ).T,
+    'J0515'	: np.array( [data[:,29],data[:,30]] ).T,
+    'J0660'	: np.array( [data[:,31],data[:,32]] ).T,
+    'J0861'	: np.array( [data[:,33],data[:,34]] ).T,
+    'XY_IMAGE'	: np.array( [data[:,48],data[:,49]] ).T,
+    'flag_uJAVA': np.array(data[:,35]),
+    'flag_gJAVA': np.array(data[:,36]),
+    'flag_rJAVA': np.array(data[:,37]),
+    'flag_iJAVA': np.array(data[:,38]),
+    'flag_zJAVA': np.array(data[:,39]),
+    'flag_J0378': np.array(data[:,40]),
+    'flag_J0395': np.array(data[:,41]),
+    'flag_J0410': np.array(data[:,42]),
+    'flag_J0430': np.array(data[:,43]),
+    'flag_J0515': np.array(data[:,44]),
+    'flag_J0660': np.array(data[:,45]),
+    'flag_J0861': np.array(data[:,46]),
+    'SQL_query'	: query_text, 
+    'date'	: time.strftime("%c"), 
+    'filename'	: out
+}
+
+# from tools.jplus_filter_system import jpflt
+# table['filt_id'] = []
+# for i in table['filter_id']:   # converting filter indexes to filter names
+#     table['filt_id'].append( jpflt( int(i - 1)) )
+# table['filt_id'] = np.array(table['filt_id']).T
+
+# # changing keys names to more intuitive ones
+# table['tile_idd'] = table.pop('tile_id')
+# table['psf'] = table.pop('fwhm_mean')
+# table['fwhm_gauss'] = table.pop('fwhm')
+# table['fwhm_gauss_rms'] = table.pop('fwhmg_rms')
+# table['tile_id'] = table.pop('ref_tile_id')
+# table['image_id'] = table.pop('tile_idd')
+# table['filter_index'] = table.pop('filter_id')
+# table['filter_name'] = table.pop('filt_id')
+
+dd.io.save(out, table)

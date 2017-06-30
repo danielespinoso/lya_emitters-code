@@ -29,13 +29,21 @@ def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False)
     magbins = []      #mag vector to plot first gaussian fits
     mean_magerr = []  #mean error on magnitudes as a function of magnitudes
     
-    sliced = ( (data['rJAVA'][:,0] > fr_lim[0]) & (data['rJAVA'][:,0] < fr_lim[1]) & (mask_tile) )
+    sliced = ( (data['mag_auto_r'] > fr_lim[0]) & (data['mag_auto_r'] < fr_lim[1]) & (mask_tile) )
     if tilenum == 2521:
-        sliced = ( (data['rJAVA'][:,0] > 17.) & (data['rJAVA'][:,0] < 17.5) & (mask_tile) )
+        sliced = ( (data['mag_auto_r'] > 17.) & (data['mag_auto_r'] < 17.5) & (mask_tile) )
     mdn = np.median(extent[sliced])   # now we have a tile-dependent reference for the "safe_box"
     hlims = [mdn-0.55, mdn+0.55]
-    safe_box = ( (data['rJAVA'][:,0] > lims[0]) & (data['rJAVA'][:,0] < lims[1]) & \
+    safe_box = ( (data['mag_auto_r'] > lims[0]) & (data['mag_auto_r'] < lims[1]) & \
                  (extent > hlims[0]) & (extent < hlims[1]) & (mask_tile) )
+
+    # TEST PLOT - BEFORE ALL OPERATIONS
+    # plt.plot(data['mag_auto_r'][mask_tile], extent[mask_tile], 'og', alpha=0.15, markersize=2)
+    # plt.plot(data['mag_auto_r'][safe_box], extent[safe_box], 'ob', alpha=0.6, markersize=2)
+    # plt.show()
+    # plt.close()
+    # sys.exit()
+    
 
     for i in np.arange(lims[0], lims[1], binlen):
         sliced = ((data['mag_auto_r'][:] > i) & (data['mag_auto_r'][:] < i+binlen) & (mask_tile))
@@ -91,6 +99,7 @@ def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False)
     fig = plt.figure(figsize=(12,10))
 
     s1 = plt.subplot2grid((5, 1), (0, 0), rowspan=3)
+    s1.set_xlim( [13., 24.5])
     s1.set_ylim( [0., 6.])
     s1.plot(data['mag_auto_r'][mask_tile], extent[mask_tile], 'og', markersize=5, alpha=0.1)     # comment to plot the final compact-extended selection
     # s1.plot(data['mag_auto_r'][extended], extent[extended], 'og', markersize=5, alpha=0.1)     #decomment to plot the final compact-extended selection
@@ -110,6 +119,7 @@ def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False)
 
     #---- CLASS_STAR PLOT ----#
     s2 = plt.subplot2grid((5, 1), (3, 0), rowspan=2, sharex=s1)
+    s1.set_xlim( [13., 24.5])
     s2.plot(data['mag_auto_r'][mask_tile], data['cstar'][mask_tile], 'ob', markersize=2, alpha=0.1)
     s2.set_xlabel('rJAVA  [mags]')
     s2.set_ylabel('CLASS_STAR')

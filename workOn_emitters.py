@@ -26,7 +26,7 @@ from jplus.tools import crossmatch_angular as xmatch
 jpl = dd.io.load(setup['jplus_candidates'])       # loads the list of candidates
 jpl['redshift'] = np.zeros(len(jpl['coords'][:,0]))
 #alljpl = dd.io.load(setup['jplus_input'])        # loads the initial jplus catalogue
-    
+
 if setup['load_sdssGal'] == True:
     sdss_gal = dd.io.load(setup['sdss_gal'])      #load sdss galaxies catalogue
 
@@ -57,6 +57,7 @@ print '\n',time.strftime("%d/%m/%Y")
 print '---------- GENERAL INFO ----------'
 print 'Filter: ', setup['filters'][0]
 print 'Mag type: '+setup['mag_type']+' mags'
+print 'Data release: '+setup['data_rels']
 print '\nList of loaded datasets:'
 if setup['load_sdssGal'] == True: print 'sdss galaxies'
 if setup['load_sdssQSO'] == True: print 'sdss quasars'
@@ -288,7 +289,7 @@ dl = dl*(1.e6)*3.0856e18              #now in cm
 lumilya = 4.*np.pi*fluxlya*(dl**2.)   #now in erg/s
 
 jpl['lya_lumin'] = lumilya
-print min(lumilya), max(lumilya)
+#print min(lumilya), max(lumilya)
 
 
 
@@ -384,7 +385,8 @@ print '\n\n'
 #add_mask = ((jpl['extended']) & (~jpl['sdss_qso']) )
 com_mask = ((jpl['compact']) & (~jpl['sdss_qso']) & (~jpl['all_liners']) & (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_stars']) & (~jpl['lqac_qso']) & (~jpl['all_liners']) & (~jpl['gaia']) )
 ext_mask = ((jpl['extended']) & (~jpl['sdss_qso']) & (~jpl['all_liners']) & (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_stars']) & (~jpl['lqac_qso']) & (~jpl['all_liners']) & (~jpl['gaia']) )
-plt.figure(figsize=(12,10))
+
+plt.figure(figsize=(11,9))
 fx = ['gJAVA', 'rJAVA']
 fy = ['gJAVA', 'iJAVA']
 xcol = jpl[fx[0]][:,0] - jpl[fx[1]][:,0]
@@ -407,14 +409,15 @@ if (setup['filters'][0] == 'J0378') or (setup['filters'][0] == 'J0395'):
             plt.text(-2.4, i+0.03, 'Comp: '+str(complet)+'%', color=coul, fontweight='bold', fontsize=9)
             plt.text(-1.5, i+0.03, 'Pur: '+str(purit)+'%', color=coul, fontweight='bold', fontsize=9)
         # another limit, by hand
-        cut = ((xcol < 0.5) & (ycol < 1.0))    # QSOs criterion
+        ikx = 0.45
+        cut = ((xcol < ikx) & (ycol < 1.0))    # QSOs criterion
         qsos_above = ((cut) & (jpl['sdss_qso']) )
         sources_above = ((cut) & (ext_mask))
         complet = round( float(len(xcol[qsos_above]))/len(xcol[jpl['sdss_qso']])*100. , 2)
         purit = round( float(len(xcol[qsos_above]))/(len(xcol[qsos_above]) + len(xcol[sources_above]))*100. , 2)
-        plt.plot((0.5, 0.5), (-1.5, 1.0), 'k--', linewidth=1.5)
-        plt.plot((-2.4, 0.5), (1.0, 1.0), 'k--', linewidth=1.5)
-        plt.text(0.55, -1.5, 'Comp: '+str(complet)+'%'+'  Pur: '+str(purit)+'%', color='k', fontweight='bold', fontsize=10)
+        plt.plot((ikx, ikx), (-1.5, 1.0), 'k--', linewidth=1.5)
+        plt.plot((-2.4, ikx), (1.0, 1.0), 'k--', linewidth=1.5)
+        plt.text(ikx+0.05, -1.5, 'Comp: '+str(complet)+'%'+'  Pur: '+str(purit)+'%', color='k', fontweight='bold', fontsize=10)
     else:
         for i in np.arange(0, 1.1, 0.2):
             coul = (i, 0.7, 0.4)
@@ -428,26 +431,26 @@ if (setup['filters'][0] == 'J0378') or (setup['filters'][0] == 'J0395'):
             plt.text(i, 3.7, 'cut:', color=coul, fontweight='bold', fontsize=9)
             plt.text(i, 3.6, str(i), color=coul, fontweight='bold', fontsize=9)
             plt.text(2.7, i, 'Comp: '+str(complet)+  '   Pur: '+str(purit), color=coul, fontweight='bold', fontsize=9)
-        plt.plot(xcol[~jpl['sdss_qso']], ycol[~jpl['sdss_qso']], 'og', markersize=2, alpha=0.3, label='all NOT-QSOs')  # ALL not-QSO sources
+        plt.plot(xcol[~jpl['sdss_qso']], ycol[~jpl['sdss_qso']], 'ok', markersize=4, alpha=0.3, label='all NOT-SDSS-QSOs')  # ALL not-QSO sources
         
 plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'or', markersize=4, alpha=0.6, label='SDSS right_z QSOs')
 not_rightZ_qso = ((jpl['sdss_qso']) & (~jpl['sdss_rightZ_qso']))
 plt.plot(xcol[not_rightZ_qso], ycol[not_rightZ_qso], 'xk', markersize=4, alpha=0.98, label='SDSS "wrong"_z QSOs')
 plt.plot(xcol[ext_mask], ycol[ext_mask], 'ob', markersize=4, alpha=0.8, label='extended candidates')
-plt.plot(xcol[com_mask], ycol[com_mask], 'og', markersize=2, alpha=0.6, label='compact candidates')
-plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]')
-plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]')
-plt.legend(fancybox=True)
-plt.title('Color-color cut to discard QSOs (data from '+setup['filters'][0]+' filter)', fontsize=16)
-# if on_QSO == True:
-#     plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCutsOnQSOs_withCompact'+setup['filters'][0]+'.png')
-#     a = 1
-# else:
-#     plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCuts_'+setup['filters'][0]+'.png')
-#     a = 1
+#plt.plot(xcol[com_mask], ycol[com_mask], 'og', markersize=2, alpha=0.6, label='compact candidates')
+plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]', fontsize=12)
+plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]', fontsize=12)
+plt.legend(fancybox=True, fontsize=12)
+plt.title('Color-color cut to discard QSOs ('+setup['data_rels']+' data; '+setup['filters'][0]+' filter)', fontsize=16)
+if on_QSO == True:
+    plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCutsOnQSOs_'+setup['data_rels']+'data_'+setup['filters'][0]+'.png')
+    a = 1
+else:
+    plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCuts_'+setup['data_rels']+'data_'+setup['filters'][0]+'.png')
+    a = 1
 #plt.show()
 plt.close()
-#sys.exit()
+sys.exit()
 
 
 
@@ -501,7 +504,7 @@ final = jplus.tools.select_object(jpl, over_SN)              # same as above but
 #HDF5 catalogues
 dd.io.save(setup['final_catalog'], all_final)                # all candidates (excluding QSOs, galaxies, liners...)
 dd.io.save(setup['final_catalog'][:-3]+'_overSN.h5', final)  # only candidates above Broad-Band S/N cuts
-dd.io.save(setup['flagged_catalog'], jpl)                    # ALL candidates (excluding nothing: this rewrites the input, adding the selection flags)
+dd.io.save(setup['flag_catalog'], jpl)                       # ALL candidates (excluding nothing: this rewrites the input, adding the selection flags)
 
 #ASCII tables
 matrix = np.empty( (8, len(jpl['coords'][candidates,0])) )   # all candidates (excluding QSOs, galaxies, liners...)
@@ -529,7 +532,7 @@ matrix[0,:] = jpl['coords'][over_SN,0]
 matrix[1,:] = jpl['coords'][over_SN,1]
 head = 'ra        dec'
 fmt_string = '%3.5f %3.5f'
-np.savetxt(setup['final_radec_overSN'], matrix.T, fmt=fmt_string, header=head)
+np.savetxt(setup['radec_overSN'], matrix.T, fmt=fmt_string, header=head)
 
 sys.exit()
 

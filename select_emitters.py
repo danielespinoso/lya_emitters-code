@@ -155,7 +155,7 @@ print '\nNumber of tiles to analyse: ', len(set(jpl['tile_id']))
 for i in set(jpl['tile_id']):
     uPrint('working on jplus data tile by tile... now: ',appendix=str(int(i)) )
     tilemask = (jpl['tile_id'] == i)
-    # if (i != 9859):
+    # if (i != 9573):
     #     continue
 
     #-----------  JPLUS SIGMA LINE  -----------#
@@ -183,9 +183,6 @@ for i in set(jpl['tile_id']):
     compact_mask = ((extdness <= border) & (tilemask))
     jpl['extended'] = ((jpl['extended']) | (extended_mask))
     jpl['compact'] = ((jpl['compact']) | (compact_mask))
-    # extended_mask = np.ones(len(tilemask), dtype=bool)
-    # compact_mask = np.ones(len(tilemask), dtype=bool)
-    # pp = [30, -0.01, 1., 0.4, 40.]
     
     #---------- FINAL CANDIDATES LIST FOR CURRENT TILE ----------#
     totalmask = ((tilemask) & (sigma_mask) & (snratio_mask) & (colcol_mask) )
@@ -220,9 +217,8 @@ for i in set(jpl['tile_id']):
 uPrint('working on jplus data tile by tile... ', appendix='done')
 print 'final number of candidates: ', len(ra)
 
-
-print 'The catalogue is not going to be saved!\n(to enable saving, check final part of code/selec_emitters.py)\n\n'
-sys.exit()
+#print 'The catalogue is not going to be saved!\n(to enable saving, check final part of code/selec_emitters.py)\n\n'
+#sys.exit()
 #---------- FINAL CONVERSIONS ----------#
 uPrint('formatting ad saving jplus candidates catalogue... ', appendix=' ')
 tile = np.array(tile)
@@ -239,7 +235,7 @@ new_jpl = jplus.tools.select_object(jpl, finalmask)
 
 new_jpl['redshift'] = (setup['zmean'])*np.ones(len(new_jpl['rJAVA'][:,0]))
 
-#dd.io.save(setup['jplus_candidates'], new_jpl) #save list
+dd.io.save(setup['jplus_candidates'], new_jpl) #save list
 
 uPrint('formatting ad saving jplus candidates catalogue... ', appendix='done')
 

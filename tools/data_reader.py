@@ -22,14 +22,11 @@ def jplus_reader(out_name, my_overwr=True, jpl_overwr=False):
         from jplus.datasets import fetch_jplus_objects as fetch
     
         #----------------------------  (DOWN)LOADING JPLUS  ---------------------------#
-        if setup['mag_type'] == 'auto':
-            jpl = fetch(db='upad', mag_type="autoMags", mag_limit=[0,24], cstar_query=" ",\
-                        object_name='allTOr24', overwrite=setup['jpl_overwr'], dualMode=True,\
-                        filter_name="rJAVA", nchunks=20, extra_where_conds='')
-        elif setup['mag_type'] == 'aper':
-            jpl = fetch(db='upad', mag_type="aperMags", mag_limit=[0,24], cstar_query=" ",\
-                        object_name='allTOr24', overwrite=setup['jpl_overwr'], dualMode=True,\
-                        filter_name="rJAVA", nchunks=20, extra_where_conds='')
+        if setup['data_rels'] == '':     dab = 'upad'      #see Raul's jplus config.ini file
+        if setup['data_rels'] == 'SV2':  dab = 'test2'     #see Raul's jplus config.ini file
+        jpl = fetch(db=dab, mag_type=setup['mag_type']+"Mags", mag_limit=[0,24], cstar_query=" ",\
+                    object_name='allTOr24', overwrite=setup['jpl_overwr'], dualMode=True,\
+                    filter_name="rJAVA", nchunks=20, extra_where_conds='')
         #---------------------------  CLEANING JPLUS  --------------------------------#
         for ifilter in jplus.datasets.jplus_filter_names():
             ind = np.isfinite(jpl[ifilter][:,0]) #cleaning NaNs
