@@ -377,6 +377,10 @@ else:
     '\nNo OII_emitters analysis, we need J0378 filter!\n'
 
 
+    
+#--------   BROWSE IMAGES   --------#
+# tools.browse_jplus_images(jpl)
+# sys.exit()
 
 
     
@@ -397,27 +401,29 @@ if (setup['filters'][0] == 'J0378') or (setup['filters'][0] == 'J0395'):
     if on_QSO == True:
         for i in np.arange(0, 1.6, 0.2):
             coul = (i/1.41, 0.1, 0.8) #, 0.7, 0.4)
-            cut = ((xcol < i) & (ycol < i))    # QSOs criterion
-            qsos_above = ((cut) & (jpl['sdss_qso']) )
-            sources_above = ((cut) & (ext_mask))
-            complet = round( float(len(xcol[qsos_above]))/len(xcol[jpl['sdss_qso']])*100. , 2)
-            purit = round( float(len(xcol[qsos_above]))/(len(xcol[qsos_above]) + len(xcol[sources_above]))*100. , 2)
-            plt.plot((i, i), (-0.9, i), color=coul, linestyle='--', linewidth=1.5)
-            plt.plot((-2.4, i), (i, i), color=coul, linestyle='--', linewidth=1.5)
-            plt.text(i-0.08, -1., 'cut:', color=coul, fontweight='bold', fontsize=8)
-            plt.text(i-0.08, -1.1, str(i), color=coul, fontweight='bold', fontsize=8)
-            plt.text(-2.4, i+0.03, 'Comp: '+str(complet)+'%', color=coul, fontweight='bold', fontsize=9)
-            plt.text(-1.5, i+0.03, 'Pur: '+str(purit)+'%', color=coul, fontweight='bold', fontsize=9)
-        # another limit, by hand
-        ikx = 0.45
-        cut = ((xcol < ikx) & (ycol < 1.0))    # QSOs criterion
-        qsos_above = ((cut) & (jpl['sdss_qso']) )
-        sources_above = ((cut) & (ext_mask))
-        complet = round( float(len(xcol[qsos_above]))/len(xcol[jpl['sdss_qso']])*100. , 2)
-        purit = round( float(len(xcol[qsos_above]))/(len(xcol[qsos_above]) + len(xcol[sources_above]))*100. , 2)
-        plt.plot((ikx, ikx), (-1.5, 1.0), 'k--', linewidth=1.5)
-        plt.plot((-2.4, ikx), (1.0, 1.0), 'k--', linewidth=1.5)
-        plt.text(ikx+0.05, -1.5, 'Comp: '+str(complet)+'%'+'  Pur: '+str(purit)+'%', color='k', fontweight='bold', fontsize=10)
+        #     cut = ((xcol < i) & (ycol < i))    # QSOs criterion
+        #     qsos_above = ((cut) & (jpl['sdss_qso']) )
+        #     if setup['morph_sel'] == 'extd':  sources_above = ((cut) & (ext_mask))
+        #     if setup['morph_sel'] == 'comp':  sources_above = ((cut) & (com_mask))
+        #     complet = round( float(len(xcol[qsos_above]))/len(xcol[jpl['sdss_qso']])*100. , 2)
+        #     purit = round( float(len(xcol[qsos_above]))/(len(xcol[qsos_above]) + len(xcol[sources_above]))*100. , 2)
+        #     plt.plot((i, i), (-0.9, i), color=coul, linestyle='--', linewidth=1.5)
+        #     plt.plot((-2.4, i), (i, i), color=coul, linestyle='--', linewidth=1.5)
+        #     plt.text(i-0.08, -1., 'cut:', color=coul, fontweight='bold', fontsize=8)
+        #     plt.text(i-0.08, -1.1, str(i), color=coul, fontweight='bold', fontsize=8)
+        #     plt.text(-2.4, i+0.03, 'Comp: '+str(complet)+'%', color=coul, fontweight='bold', fontsize=9)
+        #     plt.text(-1.5, i+0.03, 'Pur: '+str(purit)+'%', color=coul, fontweight='bold', fontsize=9)
+        # # another limit, by hand
+        # ikx = 0.45
+        # cut = ((xcol < ikx) & (ycol < 1.0))    # QSOs criterion
+        # qsos_above = ((cut) & (jpl['sdss_qso']) )
+        # if setup['morph_sel'] == 'extd':  sources_above = ((cut) & (ext_mask))
+        # if setup['morph_sel'] == 'comp':  sources_above = ((cut) & (com_mask))
+        # complet = round( float(len(xcol[qsos_above]))/len(xcol[jpl['sdss_qso']])*100. , 2)
+        # purit = round( float(len(xcol[qsos_above]))/(len(xcol[qsos_above]) + len(xcol[sources_above]))*100. , 2)
+        # plt.plot((ikx, ikx), (-1.5, 1.0), 'k--', linewidth=1.5)
+        # plt.plot((-2.4, ikx), (1.0, 1.0), 'k--', linewidth=1.5)
+        # plt.text(ikx+0.05, -1.5, 'Comp: '+str(complet)+'%'+'  Pur: '+str(purit)+'%', color='k', fontweight='bold', fontsize=10)
     else:
         for i in np.arange(0, 1.1, 0.2):
             coul = (i, 0.7, 0.4)
@@ -431,26 +437,29 @@ if (setup['filters'][0] == 'J0378') or (setup['filters'][0] == 'J0395'):
             plt.text(i, 3.7, 'cut:', color=coul, fontweight='bold', fontsize=9)
             plt.text(i, 3.6, str(i), color=coul, fontweight='bold', fontsize=9)
             plt.text(2.7, i, 'Comp: '+str(complet)+  '   Pur: '+str(purit), color=coul, fontweight='bold', fontsize=9)
-        plt.plot(xcol[~jpl['sdss_qso']], ycol[~jpl['sdss_qso']], 'ok', markersize=4, alpha=0.3, label='all NOT-SDSS-QSOs')  # ALL not-QSO sources
+        plt.plot(xcol[~jpl['sdss_qso']], ycol[~jpl['sdss_qso']], 'ok', markersize=6, alpha=0.3, label='all NOT-SDSS-QSOs')  # ALL not-QSO sources
         
-plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'or', markersize=4, alpha=0.6, label='SDSS right_z QSOs')
+plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'or', markersize=6, alpha=0.6, label='SDSS right_z QSOs')
 not_rightZ_qso = ((jpl['sdss_qso']) & (~jpl['sdss_rightZ_qso']))
-plt.plot(xcol[not_rightZ_qso], ycol[not_rightZ_qso], 'xk', markersize=4, alpha=0.98, label='SDSS "wrong"_z QSOs')
-plt.plot(xcol[ext_mask], ycol[ext_mask], 'ob', markersize=4, alpha=0.8, label='extended candidates')
+plt.plot(xcol[not_rightZ_qso], ycol[not_rightZ_qso], 'xk', markersize=6, alpha=0.98, label='SDSS "wrong"_z QSOs')
+if setup['morph_sel'] == 'extd':  plt.plot(xcol[ext_mask], ycol[ext_mask], 'ob', markersize=6, alpha=0.8, label='extended candidates')
+if setup['morph_sel'] == 'comp':  plt.plot(xcol[com_mask], ycol[com_mask], 'ob', markersize=6, alpha=0.8, label='compact candidates')
 #plt.plot(xcol[com_mask], ycol[com_mask], 'og', markersize=2, alpha=0.6, label='compact candidates')
-plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]', fontsize=12)
-plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]', fontsize=12)
+plt.axis([-0.25, 1.50, -0.4, 2.2])
+plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]', fontsize=16)
+plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]', fontsize=16)
 plt.legend(fancybox=True, fontsize=12)
-plt.title('Color-color cut to discard QSOs ('+setup['data_rels']+' data; '+setup['filters'][0]+' filter)', fontsize=16)
-if on_QSO == True:
-    plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCutsOnQSOs_'+setup['data_rels']+'data_'+setup['filters'][0]+'.png')
-    a = 1
-else:
-    plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCuts_'+setup['data_rels']+'data_'+setup['filters'][0]+'.png')
-    a = 1
+plt.title('Color-color cut to discard QSOs ('+setup['data_rels']+' data; '+setup['filters'][0]+' filter)', fontsize=18)
+# if on_QSO == True:
+#     plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCutsOnQSOs_'+setup['data_rels']+'data_'+setup['filters'][0]+'.png')
+#     a = 1
+# else:
+#     plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCuts_'+setup['data_rels']+'data_'+setup['filters'][0]+'.png')
+#     a = 1
 #plt.show()
-plt.close()
-sys.exit()
+#plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-compact_ColorColor_withCuts_'+setup['data_rels']+'data_'+setup['filters'][0]+'try.eps', format='eps', dpi=2000)
+#plt.close()
+#sys.exit()
 
 
 
@@ -478,12 +487,12 @@ sys.exit()
 # sys.exit()
 
 # #PLOT SINGLE SPECTRA
-# objectid = 6
-# tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, objectid-1, mask=jpl['sdss_rightZ_qso'], units='flux', zfromSDSS=False)
+#objectid = 6
+tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, 14, mask=jpl['compact'], units='mags', zfromSDSS=False)
 
 # #PLOT MEDIAN SPECTRA ("""COMPOSITE""")
-# mask_med_spec = jpl['sdss_rightZ_qso']
-# tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='QSOs SDSS median Photo-spectrum')
+# mask_med_spec = jpl['extended']
+# tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='Extended candidates median Photo-spectrum')
 
 # candidates2 = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & \
 #                (~jpl['sdss_rightZ_qso']) & (jpl['extended']) & (~jpl['all_liners']) &\
@@ -495,7 +504,7 @@ sys.exit()
 
 
 
-
+sys.exit()
 
 #--------------------------------  DATA SAVING  --------------------------------#
 all_final = jplus.tools.select_object(jpl, candidates)       # all candidates (excluding QSOs, galaxies, liners... see definition of "candidates" mask, above)

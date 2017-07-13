@@ -19,9 +19,11 @@ def plot_colorMag_bytile(data_jpl, color, mask_selec=[], mask_tile=[], linea=[],
     plt.plot(data_jpl[filt[0]][mask_selec,0], color[mask_selec], 'ob', alpha=0.5, markersize=3, label='selected')   #plot selected sources in tile 'tile_num'
     plt.plot(setup['marr'], sigline, 'r--', linewidth=2)  #plot sigma_line
     plt.plot( (mag_cut, mag_cut), (-2., 15.), '--', c=violet, linewidth=2) #vertical line at mag_cut
+    plt.plot( (15.5, 24.5), (setup['cCut'], setup['cCut']), '--', color=orange, linewidth=2) #horizontal line at cCut
+    plt.text( 16., setup['cCut']+0.25, 'Color cut = '+str(setup['cCut']), color=orange, fontweight='bold', fontsize=10)
     
     plt.axis([15.5, 24.5, -2, 7.])
-    plt.text( 16., sigline[11]+0.25, r'$\Sigma$ = '+str(setup['sigma']), color='r', fontweight='bold', fontsize=10)
+    plt.text( 16., sigline[11]-0.45, r'$\Sigma$ = '+str(setup['sigma']), color='r', fontweight='bold', fontsize=10)
     plt.text( (mag_cut+0.25), 6., 'S/N = '+str(setup['SN']), color=violet, fontweight='bold', fontsize=10)
     plt.text( (mag_cut+0.25), 5.5, 'mag cut = '+str(int(mag_cut*100)/100.), color=violet, fontweight='bold', fontsize=10)
     plt.title('jplus tile: '+str(tile_num))
@@ -31,7 +33,8 @@ def plot_colorMag_bytile(data_jpl, color, mask_selec=[], mask_tile=[], linea=[],
         plt.ylabel('['+str(filt[1])+'; '+str(filt[2])+'] - '+str(filt[0])+'   [mags]')
     elif setup['method'] == '2FM':
         plt.ylabel(str(filt[1])+' - '+str(filt[0])+'  [mags]')
-    #plt.savefig(plotpath+'color-mag/'+setup['method']+'_'+filt[0]+'_color-mag_tile'+str(i)+'.png')
+    plt.savefig(setup['plots']+'selection_color-mag/EDR/'+setup['method']+'_'+filt[0]+'_color-mag_tile'+str(tile_num)+'.pdf')
+    #plt.savefig(setup['plots']+'selection_color-mag/EDR/'+setup['method']+'_'+filt[0]+'_color-mag_tile'+str(tile_num)+'.eps', format='eps', dpi=1000)
     plt.show()
     plt.close()
 
@@ -60,9 +63,9 @@ def plot_ColCol_bytile(data_jpl, data_mock=[], BroadBands=['gJAVA', 'rJAVA'], ma
     plt.xlabel(filt[1]+' - '+filt[0]+'  [mags]')
     plt.ylabel(filt[2]+' - '+filt[0]+'  [mags]')
     plt.title('jplus tile: '+str(tile_num))
-    plt.text(1., 3.5, 'The uJAVA-gJAVA plane is plotted\nhere even if the selection\nis made in the rJAVA-gJAVA plane', color='r')
+    #plt.text(1., 3.5, 'The uJAVA-gJAVA plane is plotted\nhere even if the selection\nis made in the rJAVA-gJAVA plane', color='r')
     plt.legend()
-    #plt.savefig(plotpath+'color-color/'+setup['method']+'_'+filt[0]+'_UGcolor-color_tile'+str(i)+'.png')
+    #plt.savefig(setup['plots']+'selection_color-color/EDR/'+setup['method']+'_'+filt[0]+'_UGcolor-color_tile'+str(tile_num)+'.eps', format='eps', dpi=1000)
     plt.show()
     plt.close()
 
@@ -158,6 +161,6 @@ def plot_morpho_bytile(data_jpl, mask_gaia=[], mask_sdss=[], mask_quasar=[],\
     plt.xlabel('rJAVA'+'  [mag]')
     plt.ylabel('MU_MAX(rJAVA)  -  rJAVA'+'  [mag]')
     plt.legend(loc=1)
-    #plt.savefig(setup['plots']+'MUMAX_tile'+str(tile_num)+'compactness_line.png')
+    #plt.savefig(setup['plots']+'MUMAX_tile'+str(tile_num)+'compactness_line.eps', format='eps', dpi=2000)
     plt.show()
     plt.close()

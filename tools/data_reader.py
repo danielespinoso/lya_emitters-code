@@ -13,7 +13,7 @@ import tools.screen_info as tsi
 # the process it saves a new jplus catalogue in $HOME/lya_emitters/datasets. This catalogue will have
 # -99. instead of [zeros, nan, +99] values and will get written only if doesn't already exist)
 
-def jplus_reader(out_name, my_overwr=True, jpl_overwr=False):
+def jplus_reader(out_name):
     if setup['jpl_overwr'] == True: # if the dataset in home/jplus_data gets overwritten, then also the catalogue in lya_emitters/dataset must be overwritten
         setup['my_overwr'] = True
     if not os.path.exists(out_name) or setup['my_overwr']==True:
@@ -22,8 +22,9 @@ def jplus_reader(out_name, my_overwr=True, jpl_overwr=False):
         from jplus.datasets import fetch_jplus_objects as fetch
     
         #----------------------------  (DOWN)LOADING JPLUS  ---------------------------#
-        if setup['data_rels'] == '':     dab = 'upad'      #see Raul's jplus config.ini file
-        if setup['data_rels'] == 'SV2':  dab = 'test2'     #see Raul's jplus config.ini file
+        if setup['data_rels'] == 'T1' :  dab = 'upad'      #see Raul's jplus config.ini file
+        if setup['data_rels'] == 'T2' :  dab = 'test2'     #see Raul's jplus config.ini file
+        if setup['data_rels'] == 'EDR':  dab = 'edr'       #see Raul's jplus config.ini file
         jpl = fetch(db=dab, mag_type=setup['mag_type']+"Mags", mag_limit=[0,24], cstar_query=" ",\
                     object_name='allTOr24', overwrite=setup['jpl_overwr'], dualMode=True,\
                     filter_name="rJAVA", nchunks=20, extra_where_conds='')
@@ -109,9 +110,9 @@ def jplus_reader(out_name, my_overwr=True, jpl_overwr=False):
         dd.io.save(out_name, new_data)
         tsi.update_print('working on datasets...                           ', appendix='done')
     else:
-        tsi.update_print('loading jplus... ', appendix=' ')
+        tsi.update_print('loading jplus '+setup['data_rels']+' data... ', appendix=' ')
         new_data = dd.io.load(out_name)
-        tsi.update_print('loading jplus... ', appendix='done')
+        tsi.update_print('loading jplus '+setup['data_rels']+' data... ', appendix='done')
 
     return new_data
         

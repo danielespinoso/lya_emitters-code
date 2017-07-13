@@ -15,7 +15,7 @@ def magerr_fit(x, *p):
 
 # THE FOLLOWING FUNCTION TRIES TO FIT A SINGLE GAUSSIAN TO THE
 # "POINTLIKE MORPHOLOGY CLOUD" in the [(mu_max - rJAVA)  vs.  (rJAVA)] plane.
-def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False):
+def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False, show_plt=False):
     from tools.morphology_maglimits_dictionary import maglimits
     lims = maglimits(tilenum)
     binlen = 0.25
@@ -81,61 +81,80 @@ def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False)
     c = pars[1]
     d = pars[2]
 
-    #-- PLOT --#
-    xcs = np.arange(15., 23., 0.05)
-    iy = a+b*magbins                                 #linear fit of gaussian centers
-    yps = k + (10.**(c*xcs+d)) + (a+b*xcs)           #straight fit to the error
-    yps2 = 2*(k + (10.**(c*xcs+d))) + (a+b*xcs)      #translated straight fit
-    yps5 = 3*(k + (10.**(c*xcs+d))) + (a+b*xcs)      #translated straight fit
-    yps3 = -1.*(k + (10.**(c*xcs+d))) + (a+b*xcs)    #simmetric fit with respect to the linear fit 
-    yps4 = mean_magerr/tot_err                       #relative importance of mag error in the total error
-
-    # border = 3*(k + (10.**(c*data['mag_auto_r'][:]+d))) + a + b*data['mag_auto_r'][:]    #decomment to plot the final compact-extended selection
-    # extended = ((extent > border) & (mask_tile))                                         #decomment to plot the final compact-extended selection
-    # compact = ((extent <= border) & (mask_tile))                                         #decomment to plot the final compact-extended selection
     
-    pink = (1.0, 0.6, 0.7)
-    pink2 = (1.0, 0.8, 0.9)
-    fig = plt.figure(figsize=(12,10))
 
-    s1 = plt.subplot2grid((5, 1), (0, 0), rowspan=3)
-    s1.set_xlim( [13., 24.5])
-    s1.set_ylim( [0., 6.])
-    s1.plot(data['mag_auto_r'][mask_tile], extent[mask_tile], 'og', markersize=5, alpha=0.1)     # comment to plot the final compact-extended selection
-    # s1.plot(data['mag_auto_r'][extended], extent[extended], 'og', markersize=5, alpha=0.1)     #decomment to plot the final compact-extended selection
-    # s1.plot(data['mag_auto_r'][compact], extent[compact], 'oy', markersize=5, alpha=0.1)       #decomment to plot the final compact-extended selection
-    s1.plot(magbins, iy, 'k-', label='linear fit of Gaus.centr.val.')
-    s1.errorbar(magbins, mean_pb, yerr=stdv_pb, fmt='o', ecolor='r', color='r', markersize=2, linewidth=2, label='Gaussian fit per bin')
-    s1.plot(magbins, iy+mean_magerr, 'b-', label='average mag error per bin')
-    s1.plot(magbins, iy-mean_magerr, 'b-')
-    s1.plot(xcs, yps, 'm-', linewidth=2, label='total-error fit')
-    s1.plot(xcs, yps2, color=pink, linewidth=2, label='2 * (total-error fit)')
-    s1.plot(xcs, yps5, color=pink2, linewidth=2, label='3 * (total-error fit)')
-    s1.plot(xcs, yps3, 'm-', linewidth=2)
-    s1.set_title('Tile: ' + str(int(tilenum))+'  morphology')
-    s1.set_xlabel('rJAVA  [mags]')
-    s1.set_ylabel('mu_max - rJAVA  [auto-mags]')
-    s1.legend()
+    #------- THE BIG PLOT -------#
+    if show_plt == True:
+        import matplotlib
+        matplotlib.rcParams.update({'font.size': 16})
+        matplotlib.rcParams.update({'font.weight': 'bold'})
+        matplotlib.rcParams.update({'lines.linewidth': 2})
+        matplotlib.rcParams.update({'lines.markersize': 4})
+        pink = (1.0, 0.6, 0.7)
+        pink2 = (1.0, 0.8, 0.9)
+        
+        # # LINES TO PLOT
+        xcs = np.arange(13., 23., 0.05)
+        iy = a+b*magbins                                 #linear fit of gaussian centers
+        yps = k + (10.**(c*xcs+d)) + (a+b*xcs)           #straight fit to the error
+        yps2 = 2*(k + (10.**(c*xcs+d))) + (a+b*xcs)      #translated straight fit
+        yps5 = 3*(k + (10.**(c*xcs+d))) + (a+b*xcs)      #translated straight fit
+        yps3 = -1.*(k + (10.**(c*xcs+d))) + (a+b*xcs)    #simmetric fit with respect to the linear fit 
+        yps4 = mean_magerr/tot_err                       #relative importance of mag error in the total error
+        # border = 3*(k + (10.**(c*data['mag_auto_r'][:]+d))) + a + b*data['mag_auto_r'][:]    #decomment to plot the final compact-extended selection
+        # extended = ((extent > border) & (mask_tile))                                         #decomment to plot the final compact-extended selection
+        # compact = ((extent <= border) & (mask_tile))                                         #decomment to plot the final compact-extended selection
+        
+        # # ACTUAL PLOT
+        fig = plt.figure(figsize=(12,10))
 
-    #---- CLASS_STAR PLOT ----#
-    s2 = plt.subplot2grid((5, 1), (3, 0), rowspan=2, sharex=s1)
-    s1.set_xlim( [13., 24.5])
-    s2.plot(data['mag_auto_r'][mask_tile], data['cstar'][mask_tile], 'ob', markersize=2, alpha=0.1)
-    s2.set_xlabel('rJAVA  [mags]')
-    s2.set_ylabel('CLASS_STAR')
-
-    # #---- PLOT MAG_ERROR "SIGNIFICANCE" within TOTAL ERROR ----#
-    # s2 = plt.subplot2grid((5, 1), (4, 0), sharex=s1)
-    # s2.plot(magbins, yps4, 'r-', linewidth=2)
-    # s2.plot((14., 24.), (0.5, 0.5), 'k--', linewidth=0.75)
-    # s2.set_title('mag_err "importance"')
-    # s2.set_xlabel('rJAVA  [mags]')
-    # s2.set_ylabel('mag/tot err')
-    
-    plt.tight_layout()
-    plt.savefig(setup['plots']+'morphology/mu_max/CLASS_STAR_comparison_and_PROPER_morpho_criterion_(gauss_fit+error_fit+3_sigma_line)/interesting_morpho-plot_tile'+str(tilenum)+'_withErrorCurve.png')
-    #plt.show()
-    plt.close()
+        # GUILLAUME MORPHOLOGY SPACE
+        s1 = plt.subplot2grid((5, 1), (0, 0), rowspan=3)
+        s1.set_xlim( [13., 24.5])
+        s1.set_ylim( [0., 6.])
+        s1.plot(data['mag_auto_r'][mask_tile], extent[mask_tile], 'og', alpha=0.08)     # comment to plot the final compact-extended selection
+        # s1.plot(data['mag_auto_r'][extended], extent[extended], 'og', alpha=0.1)     #decomment to plot the final compact-extended selection
+        # s1.plot(data['mag_auto_r'][compact], extent[compact], 'oy', alpha=0.1)       #decomment to plot the final compact-extended selection
+        s1.errorbar(magbins, mean_pb, yerr=stdv_pb, fmt='o', ecolor='r', color='r', linewidth=4, label='Fit per bin')
+        s1.plot(magbins, iy, 'k-', label='linear fit')
+        s1.plot(magbins, iy+mean_magerr, 'c-', label=r'$\sigma_{NB}$'+' per bin')
+        s1.plot(magbins, iy-mean_magerr, 'c-')
+        #s1.plot(xcs, yps, color=pink2, label='Error fit')          # 1-sigma total-error fit (up)   -   light pink
+        #s1.plot(xcs, yps3, color=pink2)                            # 1-sigma total-error fit (down) -   light pink
+        #s1.plot(xcs, yps2, color=pink, label='2 * (Error fit)')    # 2-sigma total-error fit        -   dark pink
+        s1.plot(xcs, yps5, 'm-', label='Threshold')                 # 3-sigma total-error fit        -   magenta
+        s1.set_title('Tile: ' + str(int(tilenum))+'  morphology', fontweight='bold')
+        s1.set_ylabel('mu_max - rJAVA  [auto-mags]', fontweight='bold')
+        s1.text(14., 5., '"Extended region"', color='m')
+        s1.text(18., 0.8, '"Compact region"', color='m')
+        s1.legend(fontsize=14)
+        
+        # CLASS_STAR - MAGNITUDE SPACE 
+        s2 = plt.subplot2grid((5, 1), (3, 0), rowspan=2, sharex=s1)
+        s2.set_xlim( [13., 24.5])
+        s2.plot(data['mag_auto_r'][mask_tile], data['cstar'][mask_tile], 'ob', markersize=2, alpha=0.1)
+        s2.plot((13., 24.5), (0.9, 0.9), 'r--')
+        s2.text(22., 0.95, '"Extended region"', color='r', fontsize=10)
+        s2.text(22., 0.77, '"Compact region"', color='r', fontsize=10)
+        s2.text(14., 0.8, 'CUT = 0.9', color='r', fontsize=10)
+        s2.set_xlabel('rJAVA  [mags]', fontweight='bold')
+        s2.set_ylabel('CLASS_STAR', fontweight='bold')
+        
+        # # MAG_ERROR "SIGNIFICANCE" within TOTAL ERROR
+        # s2 = plt.subplot2grid((5, 1), (4, 0), sharex=s1)
+        # s2.plot(magbins, yps4, 'r-', linewidth=2)
+        # s2.plot((14., 24.), (0.5, 0.5), 'k--', linewidth=0.75)
+        # s2.set_title('mag_err "importance"')
+        # s2.set_xlabel('rJAVA  [mags]')
+        # s2.set_ylabel('mag/tot err')
+        
+        plt.tight_layout()
+        fold = 'CLASS_STAR_comparison_and_PROPER_morpho_criterion_(gauss_fit+error_fit+3_sigma_line)/'
+        #plt.savefig(setup['plots']+'morphology/mu_max/'+fold+'morpho-plot_tile'+str(tilenum)+'_cstar_errThreshold.png')
+        #plt.savefig(setup['plots']+'morphology/mu_max/'+fold+'morpho-plot_tile'+str(tilenum)+'_cstar_errThreshold.eps', format='eps', dpi=1000)
+        #plt.savefig(setup['plots']+'morphology/mu_max/'+fold+'morpho-plot_tile'+str(tilenum)+'_cstar_errThreshold.pdf')
+        plt.show()
+        plt.close()
     
 
     parameters = [a, b , k , c, d]

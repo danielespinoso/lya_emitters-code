@@ -25,7 +25,7 @@ def sigmaline(cont, NB, sigma=setup['sigma'], magbin=setup['mbin'], maglim=setup
     color = cont[mask,0] - NB[mask,0]
     avg = np.mean(color)
     phot_err = np.sqrt(cont[mask,1]**2. + NB[mask,1]**2.)
-    
+        
     magarr = np.arange(maglim[0], maglim[1], magbin)
     sigma_line = np.zeros(len(magarr))
     cc = 0
@@ -38,7 +38,7 @@ def sigmaline(cont, NB, sigma=setup['sigma'], magbin=setup['mbin'], maglim=setup
         else:
             sigma_line[cc] = np.percentile(i_err, pcent)
         cc += 1
-
+        
     sigma_line = interp1d(magarr,sigma_line,kind='linear',bounds_error=None,fill_value='extrapolate')
 
     if show_plt == True:

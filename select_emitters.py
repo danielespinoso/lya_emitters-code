@@ -27,29 +27,11 @@ from jplus.tools import crossmatch_angular as ang_xmatch
 
 #######################################################
 #                                                     #
-#                  LOADING DATASETS                   #
-#   MORE DETAILS IN '-->/code/datasets/README.txt'    #
+#                   LOADING DATASETS                  #
 #                                                     #
 #######################################################
 
 first_jpl = tools.data_reader.jplus_reader(setup['jplus_input'])
-
-if setup['load_sdssGal'] == True:
-    sdss_gal = tools.get_sdss_galaxies()  #loads sdss galaxies catalogue
-    
-if setup['load_sdssQSO'] == True:
-    sdss_qso = tools.get_sdss_qso()       #loads sdss quasars catalogue
-    qso_zmask = ((sdss_qso['zspec'] > setup['zmin']) & (sdss_qso['zspec'] < setup['zmax']))
-    sdss_qso_z = jplus.tools.select_object(sdss_qso, qso_zmask)
-    
-if setup['load_sdssSTAR'] == True:
-    sdss_str = tools.get_sdss_stars()     #loads sdss stars catalogue
-    
-if setup['load_gaia'] == True:
-    uPrint('loading gaia... ', appendix=' ')
-    gaia = dd.io.load(setup['gaia'])          #load gaia stars catalogue
-    uPrint('loading gaia....      ', appendix='done')
-
 
 
 #######################################################
@@ -59,15 +41,14 @@ if setup['load_gaia'] == True:
 #######################################################
 if setup['load_mock_in'] == True:
     from mock_analysis import *    
-    uPrint('loading mock data... ', appendix=' ')
+    uPrint('loading mock data...       ', appendix=' ')
     all_mock = tools.data_reader.mock_reader(setup['mock_input'], lines=True, emitters=True)
     uPrint('loading mock data....      ', appendix='done')
-    uPrint('working on mock data... ', appendix=' ')
+    uPrint('working on mock data...    ', appendix=' ')
     mock = analyse_jplus_mock(all_mock)
-    uPrint('working on mock data    ', appendix='done')
+    uPrint('working on mock data       ', appendix='done')
 else:
     mock = []
-
 
 
 #######################################################
@@ -75,7 +56,7 @@ else:
 #            PRELIMINARY WORK ON JPLUS DATA           #
 #                                                     #
 #######################################################
-uPrint('working on jplus data... ', appendix=' ')
+uPrint('initial mask of jplus data... ', appendix='' )
 
 #-------------  INITIAL MAG MASK  ------------#
 mag_mask =  ((first_jpl[filt[0]][:,0] > 0) & \
@@ -84,8 +65,16 @@ mag_mask =  ((first_jpl[filt[0]][:,0] > 0) & \
              (first_jpl['mag_auto_r'][:] > setup['ml'][0]) & \
              (first_jpl['rJAVA'][:,0] > setup['ml'][0]) & (first_jpl['rJAVA'][:,0] < setup['ml'][1]))
 jpl = jplus.tools.select_object(first_jpl, mag_mask)
+uPrint('initial mask of jplus data...: ', appendix='done' )
 
 
+#-------------  CROSSMATCHING EXTERNAL DATASETS FOR PLOTS  ------------#
+if (setup['tile_plot'] == True) or (setup['morpho_plot'] == True) or (setup['cstar_plot'] == True):
+    print 'cross-matching data for plots...     \n'
+    mask_js, mask_jq, mask_jq_z, mask_jstr, mask_jg = tools.xmatch_wrapper(jpl)
+    print 'cross-matching data for plots...     done\n'
+
+    
 #--------  NARROW BAND EXCESS COMPUTATION  -------#
 if (setup['method'] == '3FM'):
     fline, fcont, flux_nb, fcont_error = tools.threeFM.jplus3FM(jpl)
@@ -96,51 +85,15 @@ elif (setup['method'] == '2FM'):
     mag_cont_error = jpl[filt[1]][:,1]
     mag_color = jpl[filt[1]][:,0] - jpl[filt[0]][:,0]
 
-
+    
 #-------  EXTENDED-NESS PARAMETER COMPUTATION  ------#
 pxl = 0.55*0.55  # jplus pixel area in arcsec^2
 mumax = jpl['mu_max_r'][:] - 2.5*np.log10(pxl)
 extdness = mumax - jpl['mag_auto_r'][:]
 jpl['extended'] = np.zeros(len(jpl['mu_max_r']), dtype=bool)
 jpl['compact'] = np.zeros(len(jpl['mu_max_r']), dtype=bool)
-    
 
-#-------------  CROSS-MATCHES  (only for tile-by-tile plots)------------#
-if (setup['tile_plot'] == True) or (setup['morpho_plot'] == True) or (setup['cstar_plot'] == True):
-    uPrint('working on jplus data: cross-matching...', appendix=' ')
-    
-    # SDSS GALAXIES
-    if setup['load_sdssGal'] == True:
-        djs, ijs = ang_xmatch(jpl['coords'], sdss_gal['coords'], max_distance=3/3600.)
-        mask_js = (djs != np.inf)
-    else:
-        mask_js = np.ones(len(jpl['coords'][:,0]), dtype=bool)
-        
-    # SDSS QUASARS
-    if setup['load_sdssQSO'] == True:
-        djq, ijq = ang_xmatch(jpl['coords'], sdss_qso['coords'], max_distance=3/3600.)
-        mask_jq = (djq != np.inf)
-        djq_z, ijq_z = ang_xmatch(jpl['coords'], sdss_qso_z['coords'], max_distance=3/3600.)
-        mask_jq_z = (djq_z != np.inf)
-    else:
-        mask_jq = np.ones(len(jpl['coords'][:,0]), dtype=bool)
-        mask_jq_z = np.ones(len(jpl['coords'][:,0]), dtype=bool)
-    
-    # SDSS STARS
-    if setup['load_sdssSTAR'] == True:
-        djstr, ijstr = ang_xmatch(jpl['coords'], sdss_str['coords'], max_distance=3/3600.)
-        mask_jstr = (djstr != np.inf)
-    else:
-        mask_jstr = np.ones(len(jpl['coords'][:,0]), dtype=bool)
-        
-    # GAIA STARS
-    if setup['load_gaia'] == True:
-        djg, ijg = ang_xmatch(jpl['coords'], gaia['coords'], max_distance=3/3600.)
-        mask_jg = (djg != np.inf)
-    else:
-        mask_jg = np.ones(len(jpl['coords'][:,0]), dtype=bool)
 
-    uPrint('working on jplus data: cross-matching...', appendix='done')
 
 
 ########################################################################################
@@ -148,14 +101,13 @@ if (setup['tile_plot'] == True) or (setup['morpho_plot'] == True) or (setup['cst
 #                         TILE-by-TILE ANALYSIS ON JPLUS DATA                          #
 #                                                                                      #
 ########################################################################################
-tile=[]; ra=[]; dec=[]; flux_cont=[]; flux_cont_error=[]; cont_mag=[]; cont_mag_error=[]
-jp_morph = []; sdss_morph = []; qso_morph = []; qso_morph_z = []; gaia_morph = []; ext=[[],[]]
+tile=[]; ra=[]; dec=[]
 print '\nNumber of tiles to analyse: ', len(set(jpl['tile_id']))
 
 for i in set(jpl['tile_id']):
     uPrint('working on jplus data tile by tile... now: ',appendix=str(int(i)) )
     tilemask = (jpl['tile_id'] == i)
-    # if (i != 9573):
+    # if (i != 5125):
     #     continue
 
     #-----------  JPLUS SIGMA LINE  -----------#
@@ -163,7 +115,7 @@ for i in set(jpl['tile_id']):
     narr_band = np.array([jpl[filt[0]][tilemask,0], jpl[filt[0]][tilemask,1]]).T
     line = tools.sigma_line.sigmaline(continuum, narr_band, show_plt=False)
     sigma_mask = ( mag_color > line(jpl[filt[0]][:,0]) )
-    
+
     #---------- NRW-BAND S/N RATIO and MAG CUTS ----------#
     mcut = tools.signalTOnoise.jplus_SNratio(jpl, band=filt[0], mask=tilemask, show_plt=False)
     snratio_mask = (jpl[filt[0]][:,0] < mcut)
@@ -176,7 +128,7 @@ for i in set(jpl['tile_id']):
     colcol_mask = ((bbc_color > bbc_cut) & (bbuc_color > bbuc_cut))
 
     #-------------- SOURCE EXTENT  --------------#
-    pp = tools.evaluate_morphology(jpl, extdness, tilemask, i, plot_by_slice=False)
+    pp = tools.evaluate_morphology(jpl, extdness, tilemask, i, plot_by_slice=False, show_plt=False)
     border = setup['morph_fact'] * (pp[2] + (10.**(pp[3]*jpl['rJAVA'][:,0]+pp[4])) )\
              + (pp[0] + pp[1]*jpl['rJAVA'][:,0])
     extended_mask = ((extdness > border) & (tilemask))
@@ -213,12 +165,12 @@ for i in set(jpl['tile_id']):
 
     uPrint('working on jplus data tile by tile... now: ',appendix='        ' )    
 
-#uPrint('working on jplus data tile by tile... ', appendix='          ')
+    
 uPrint('working on jplus data tile by tile... ', appendix='done')
 print 'final number of candidates: ', len(ra)
 
-#print 'The catalogue is not going to be saved!\n(to enable saving, check final part of code/selec_emitters.py)\n\n'
-#sys.exit()
+print 'The catalogue is not going to be saved!\n(to enable saving, check final part of code/selec_emitters.py)\n\n'
+sys.exit()
 #---------- FINAL CONVERSIONS ----------#
 uPrint('formatting ad saving jplus candidates catalogue... ', appendix=' ')
 tile = np.array(tile)

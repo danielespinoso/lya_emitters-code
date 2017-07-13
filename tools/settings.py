@@ -41,7 +41,7 @@ def set_up():
     
     setup['ml'] = [14., 24.]    # general mag limits for cuts (SQL query, color masking, SNratio...)
     setup['mbin'] = 0.25        # magnitude bin for NB-excess confidence computation
-    setup['SNmbin'] = 0.2      # magnitude bin for SNratio computation
+    setup['SNmbin'] = 0.2       # magnitude bin for SNratio computation
     setup['marr'] = np.arange(setup['ml'][0], setup['ml'][1], 0.25)  # array of magnitudes
     setup['sigma'] = 3.         # sigmas for NB-excess confidence (see sigma_line.py routine)
     setup['SN'] = 3.            # Signal-to-Noise to determine the NB magnitude cut (and S/N cut on BB filters in workOn_emitters.py)
@@ -62,8 +62,8 @@ def set_up():
     setup['method'] = '2FM'      # method for NB-excess computation (choose '3FM' otherwise)
     setup['sdssPhot'] = False    # if 'True' data_reader.py (called from select_emitters.py) x-matches jplus with sdss and substitutes sdss photometry to jplus' one
     setup['galexmask'] = True    # if 'True' only sources NOT in galex will be finally selecte
-    setup['morph_sel'] = 'extd'  # set 'extd' or 'comp' to respectively select extended or compact sources during the final selection (workOn_emitters.py)
-    setup['data_rels'] = 'SV2'   # controls which JPLUS data release is used: '' for SV1, 'EDR' for Early Data Release (subset of SV1) or 'SV2' cleaner and newer data that eventually will substitute SV1
+    setup['morph_sel'] = 'comp'  # set 'extd' or 'comp' to respectively select extended or compact sources during the final selection (workOn_emitters.py)
+    setup['data_rels'] = 'T1'   # controls which JPLUS data release is used: 'T1' for ordinary DATA-ACCESS upad catalogue, 'EDR' for Early Data Release (subset of T1) or 'T2' for test-2 data
 
         
 
@@ -79,22 +79,26 @@ def set_up():
     # JPLUS CANDIDATES - binary files produced by select_emitters.py on which 'workON_emitters.py' operates
     if setup['mag_type'] == 'aper':
         setup['jplus_candidates'] = setup['data']+'firstSelection_'+setup['filters'][0]+'_'+setup['mag_type']+'Mag_'+setup['method']+'_'+setup['data_rels']+'.h5'
+    if setup['data_rels'] == '':
+        setup['jplus_candidates'] = setup['data']+'firstSelection_'+setup['filters'][0]+'_'+setup['mag_type']+'Mag_'+setup['method']+setup['data_rels']+'.h5'
 
     
 
     #---------------------------------------------------------------#
     #-----------  CHOOSE WHETHER TO LOAD OTHER DATASETS  -----------#
+    #----------  TO CROSSMATCH THEM IN workOn_emitters.py  ---------#
     #---------------------------------------------------------------#
-    setup['load_mock_in'] = False      # if 'True' mock complete catalog gets loaded (select_emitters.py)
-    setup['load_mock_cd'] = False      # if 'True' mock candidates get loaded (workOn_emitters.py)
-    setup['load_gaia'] = False         # if 'True' gaia stars get loaded (for morphology analysis)
-    setup['load_lqac'] = True          # if 'True' LQAC quasars get loaded (for crossmatch)
-    setup['load_rafa'] = False         # if 'True' Rafa's HII regions get loaded (for crossmatch)
     
-    setup['load_sdssGal'] = True       # if 'True' sdss galaxies catalogue gets loaded (everywhere)
-    setup['load_sdssQSO'] = True       # if 'True' sdss quasars catalogue gets loaded (everywhere)
-    setup['load_sdssSTAR'] = True      # if 'True' sdss stars catalogue gets loaded (everywhere)
+    setup['load_mock_in'] = False   # if 'True' mock complete catalog gets loaded (in mock_analysis and select_emitters.py)
+    setup['load_gaia'] = False      # if 'True' gaia stars get loaded
+    setup['load_lqac'] = True       # if 'True' LQAC quasars get loaded
+    setup['load_rafa'] = False      # if 'True' Rafa's HII regions get loaded
+    
+    setup['load_sdssGal'] = True    # if 'True' sdss galaxies catalogue gets loaded
+    setup['load_sdssQSO'] = True    # if 'True' sdss quasars catalogue gets loaded
+    setup['load_sdssSTAR'] = True   # if 'True' sdss stars catalogue gets loaded
 
+    setup['load_mock_cd'] = False   # if 'True' mock candidates get loaded
 
         
     #-------------------------------------------#
@@ -150,24 +154,14 @@ def set_up():
     #-----------  PLOTS CONTROL  -----------#
     #---------------------------------------#
     
-    setup['tile_plot'] = False        # if 'True' activate tile by tile plots (see select_emitters.py)
-    setup['morpho_plot'] = False      # if 'True' activate morphology plots (see select_emitters.py)
-    setup['cstar_plot'] = False       # if 'True' activate CLASS_STAR plots (see select_emitters.py)
-    
-    setup['plot_sdssGal'] = False      # if 'True' sdss galaxies are plotted in plots (col-col & morph)
-    if setup['plot_sdssGal'] == True:
-        setup['load_sdssGal'] = True  # forces to load the dataset
-    
-    setup['plot_sdssQSO'] = False      # if 'True' sdss quasars are plotted in plots (col-col & morph)
-    if setup['plot_sdssQSO'] == True:
-        setup['load_sdssQSO'] = True  # forces to load the dataset
-    
-    setup['plot_mock'] = False        # if 'True' mock galaxies are plotted in color-color plot
-    if setup['plot_mock'] == True:
-        setup['load_mock'] = True     # forces to load the dataset
-    
-    setup['plot_gaia'] = False        # if 'True' gaia stars are plotted in morphology plot
-    if setup['plot_gaia'] == True:
-        setup['load_gaia'] = True     # forces to load the dataset
+    setup['tile_plot'] = False      # if 'True' activate tile by tile plots (see select_emitters.py)
+    setup['morpho_plot'] = False    # if 'True' activate morphology plots (see select_emitters.py)
+    setup['cstar_plot'] = False     # if 'True' activate CLASS_STAR plots (see select_emitters.py)
+
+    setup['plot_mock'] = False      # if 'True' mock galaxies are plotted in color-color plot --> select_emitters.py
+    setup['plot_gaia'] = False      # if 'True' gaia stars are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py
+    setup['plot_sdssGal'] = False   # if 'True' sdss galaxies are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py
+    setup['plot_sdssQSO'] = False   # if 'True' sdss quasars are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py
+    setup['plot_sdssSTAR'] = False  # if 'True' sdss stars are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py
         
     return setup
