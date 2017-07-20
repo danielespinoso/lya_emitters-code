@@ -101,14 +101,24 @@ jpl['compact'] = np.zeros(len(jpl['mu_max_r']), dtype=bool)
 #                         TILE-by-TILE ANALYSIS ON JPLUS DATA                          #
 #                                                                                      #
 ########################################################################################
-tile=[]; ra=[]; dec=[]
+tile=[]; ra=[]; dec=[]; cc=0
 print '\nNumber of tiles to analyse: ', len(set(jpl['tile_id']))
 
 for i in set(jpl['tile_id']):
     uPrint('working on jplus data tile by tile... now: ',appendix=str(int(i)) )
     tilemask = (jpl['tile_id'] == i)
+    # if (cc > 0):
+    #     continue
     # if (i != 5125):
     #     continue
+
+    
+    #maska = (first_jpl['xy_image'][:,0])
+    plt.hist(jpl['xy_image'][tilemask,0], bins=100, histtype='step')
+    plt.title('tile: '+str(i)+'  min_x: '+str(min(jpl['xy_image'][tilemask,0]))+'  max_x: '+str(max(jpl['xy_image'][tilemask,0])))
+    plt.show()
+    plt.close()
+    continue
 
     #-----------  JPLUS SIGMA LINE  -----------#
     continuum = np.array([mag_cont[tilemask], mag_cont_error[tilemask]]).T
@@ -163,32 +173,36 @@ for i in set(jpl['tile_id']):
         cstarPlot(jpl, mask_gaia=mask_jg, mask_sdss=mask_js, mask_quasar=mask_jq,\
                   mask_tile=tilemask, mask_sel=totalmask, mag_cut=mcut, tile_num=i)
 
-    uPrint('working on jplus data tile by tile... now: ',appendix='        ' )    
-
+    uPrint('working on jplus data tile by tile... now: ',appendix='        ' )
+    cc += 1
     
 uPrint('working on jplus data tile by tile... ', appendix='done')
 print 'final number of candidates: ', len(ra)
 
-print 'The catalogue is not going to be saved!\n(to enable saving, check final part of code/selec_emitters.py)\n\n'
-sys.exit()
-#---------- FINAL CONVERSIONS ----------#
-uPrint('formatting ad saving jplus candidates catalogue... ', appendix=' ')
-tile = np.array(tile)
-ra = np.array(ra)
-dec = np.array(dec)
 
-#---------- FORMATTING and SAVING OUTPUT ----------#
-ramask = np.in1d(jpl['coords'][:,0], ra[:])
-decmask = np.in1d(jpl['coords'][:,1], dec[:])
 
-finalmask = ((ramask) & (decmask))
-
-new_jpl = jplus.tools.select_object(jpl, finalmask)
-
-new_jpl['redshift'] = (setup['zmean'])*np.ones(len(new_jpl['rJAVA'][:,0]))
-
-dd.io.save(setup['jplus_candidates'], new_jpl) #save list
-
-uPrint('formatting ad saving jplus candidates catalogue... ', appendix='done')
+if setup['save_firstSel'] == False:
+    print 'The catalogue is not going to be saved!\n(to enable saving change "setup[save_firstSel]" to "True" in  tools/settings.py)\n\n'
+    sys.exit()
+else:
+    #---------- FINAL CONVERSIONS ----------#
+    uPrint('formatting ad saving jplus candidates catalogue... ', appendix=' ')
+    tile = np.array(tile)
+    ra = np.array(ra)
+    dec = np.array(dec)
+    
+    #---------- FORMATTING and SAVING OUTPUT ----------#
+    ramask = np.in1d(jpl['coords'][:,0], ra[:])
+    decmask = np.in1d(jpl['coords'][:,1], dec[:])
+    
+    finalmask = ((ramask) & (decmask))
+    
+    new_jpl = jplus.tools.select_object(jpl, finalmask)
+    
+    new_jpl['redshift'] = (setup['zmean'])*np.ones(len(new_jpl['rJAVA'][:,0]))
+    
+    dd.io.save(setup['jplus_candidates'], new_jpl) #save list
+    
+    uPrint('formatting ad saving jplus candidates catalogue... ', appendix='done')
 
 

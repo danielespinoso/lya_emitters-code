@@ -72,6 +72,7 @@ def jplus_reader(out_name):
             'coords':jpl['coords'][mask_js],
             'object_id':jpl['object_id'][mask_js],
             'tile_id':jpl['tile_id'][mask_js],
+            'xy_image':jpl['XY_IMAGE'][mask_js],
             'cstar':jpl['cstar'][mask_js],
             'uJAVA':jpl['uJAVA'][mask_js],
             'J0378':jpl['J0378'][mask_js],

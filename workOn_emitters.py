@@ -15,6 +15,7 @@ from jplus.tools import crossmatch_angular as xmatch
 
 
 
+
 #######################################################
 #
 #                WORK ON JPLUS CANDIDATES
@@ -80,10 +81,10 @@ print '\nInitial candidates: ', len(jpl['coords'][:,0])
 # S/N threshold for each tile. Instead of looking for the S/N-dependant mag_limit cut, then, I am directly comparing
 # the S/N of each source to a certain threshold (S/N=3) in order to include/exclude them from the final list.
 
-SNcutR_mask = ( (1./jpl['rJAVA'][:,1]) > setup['SN'])
+SNcutR_mask = ( (1./jpl['rJAVA'][:,1]) > setup['bb_SN'])
 jpl['over_rJAVA_cut'] = SNcutR_mask
 
-SNcutG_mask = ( (1./jpl['gJAVA'][:,1]) > setup['SN'])
+SNcutG_mask = ( (1./jpl['gJAVA'][:,1]) > setup['bb_SN'])
 jpl['over_gJAVA_cut'] = SNcutG_mask
 
 jpl['over_all_SNcuts'] = ((SNcutR_mask) & (SNcutG_mask))
@@ -305,7 +306,7 @@ else:
 
     
 if setup['morph_sel'] == 'extd': print '\n---------- EXTENDED ----------'
-if setup['morph_sel'] == 'comp': print '\n---------- COMPACT ----------'
+if setup['morph_sel'] == 'comp': print '\n---------- COMPACT -----------'
 print 'Candidates are defined as:'
 if setup['galexmask'] == True: print '- NOT in Galex'
 if setup['load_sdssGal'] == True: print '- NOT sdss galaxies'
@@ -442,23 +443,21 @@ if (setup['filters'][0] == 'J0378') or (setup['filters'][0] == 'J0395'):
 plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'or', markersize=6, alpha=0.6, label='SDSS right_z QSOs')
 not_rightZ_qso = ((jpl['sdss_qso']) & (~jpl['sdss_rightZ_qso']))
 plt.plot(xcol[not_rightZ_qso], ycol[not_rightZ_qso], 'xk', markersize=6, alpha=0.98, label='SDSS "wrong"_z QSOs')
-if setup['morph_sel'] == 'extd':  plt.plot(xcol[ext_mask], ycol[ext_mask], 'ob', markersize=6, alpha=0.8, label='extended candidates')
-if setup['morph_sel'] == 'comp':  plt.plot(xcol[com_mask], ycol[com_mask], 'ob', markersize=6, alpha=0.8, label='compact candidates')
+if setup['morph_sel'] == 'extd':  plt.plot(xcol[ext_mask], ycol[ext_mask], 'ob', markersize=6, alpha=0.4, label='all extended candidates')
+if setup['morph_sel'] == 'comp':  plt.plot(xcol[com_mask], ycol[com_mask], 'ob', markersize=6, alpha=0.4, label='all compact candidates')
 #plt.plot(xcol[com_mask], ycol[com_mask], 'og', markersize=2, alpha=0.6, label='compact candidates')
-plt.axis([-0.25, 1.50, -0.4, 2.2])
+#plt.axis([-0.25, 1.50, -0.4, 2.2])
 plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]', fontsize=16)
 plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]', fontsize=16)
 plt.legend(fancybox=True, fontsize=12)
-plt.title('Color-color cut to discard QSOs ('+setup['data_rels']+' data; '+setup['filters'][0]+' filter)', fontsize=18)
+plt.title('Color-color cut to discard QSOs  ('+setup['data_rels']+' data;  '+setup['filters'][0]+' filter; '+' NB S/N='+str(int(setup['SN']))+')', fontsize=16)
 # if on_QSO == True:
 #     plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCutsOnQSOs_'+setup['data_rels']+'data_'+setup['filters'][0]+'.png')
-#     a = 1
 # else:
 #     plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-extended_ColorColor_withCuts_'+setup['data_rels']+'data_'+setup['filters'][0]+'.png')
-#     a = 1
 #plt.show()
-#plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-compact_ColorColor_withCuts_'+setup['data_rels']+'data_'+setup['filters'][0]+'try.eps', format='eps', dpi=2000)
-#plt.close()
+#plt.savefig(setup['plots']+fx[0][0]+fx[1][0]+'-'+fy[0][0]+fy[1][0]+'JAVA_QSOs-vs-compact_ColorColor_'+setup['data_rels']+'data_'+setup['filters'][0]+'.pdf')#, format='eps', dpi=2000)
+plt.close()
 #sys.exit()
 
 
@@ -486,13 +485,16 @@ plt.title('Color-color cut to discard QSOs ('+setup['data_rels']+' data; '+setup
 # plt.close()
 # sys.exit()
 
+
+
 # #PLOT SINGLE SPECTRA
 #objectid = 6
-tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, 14, mask=jpl['compact'], units='mags', zfromSDSS=False)
+#tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, 14, mask=jpl['compact'], units='mags', zfromSDSS=False)
 
 # #PLOT MEDIAN SPECTRA ("""COMPOSITE""")
-# mask_med_spec = jpl['extended']
-# tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='Extended candidates median Photo-spectrum')
+mask_med_spec = jpl['compact']
+objects = 'comp'  # description string of the object-class that is going to be plotted
+tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol=objects+' median Photo-spec ('+setup['data_rels']+'_'+'SN'+str(int(setup['SN']))+'_data)')
 
 # candidates2 = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & \
 #                (~jpl['sdss_rightZ_qso']) & (jpl['extended']) & (~jpl['all_liners']) &\
@@ -504,7 +506,6 @@ tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, 14, mask=jpl['compact'], un
 
 
 
-sys.exit()
 
 #--------------------------------  DATA SAVING  --------------------------------#
 all_final = jplus.tools.select_object(jpl, candidates)       # all candidates (excluding QSOs, galaxies, liners... see definition of "candidates" mask, above)
@@ -516,18 +517,22 @@ dd.io.save(setup['final_catalog'][:-3]+'_overSN.h5', final)  # only candidates a
 dd.io.save(setup['flag_catalog'], jpl)                       # ALL candidates (excluding nothing: this rewrites the input, adding the selection flags)
 
 #ASCII tables
-matrix = np.empty( (8, len(jpl['coords'][candidates,0])) )   # all candidates (excluding QSOs, galaxies, liners...)
+matrix = np.empty( (10, len(jpl['coords'][candidates,0])) )   # all candidates (excluding QSOs, galaxies, liners...)
 matrix[0,:] = jpl['tile_id'][candidates]
 matrix[1,:] = jpl['coords'][candidates,0]
 matrix[2,:] = jpl['coords'][candidates,1]
 matrix[3,:] = jpl[setup['filters'][0]][candidates,0]
-matrix[4,:] = fluxlya[candidates]
-matrix[5,:] = lumilya[candidates]
-matrix[6,:] = jpl['rJAVA'][candidates,0]
-matrix[7,:] = jpl['redshift'][candidates]
-head = 'tl   ra        dec    NBmag line_flux line_lum  rJAVA  z_NB'
-fmt_string = '%4d %3.5f %3.5f %4.2f %4.3e %4.3e %4.2f %4.3f'
+matrix[4,:] = jpl['rJAVA'][candidates,0]
+matrix[5,:] = jpl['redshift'][candidates]
+matrix[6,:] = lumilya[candidates]
+matrix[7,:] = fluxlya[candidates]
+matrix[8,:] = jpl['gJAVA'][candidates,0]/(np.pi*9) #OSIRIS exp.time calculator needs mag/arcsec^2 for extended candidates (since we are using mag_aper3.0 --> np.pi*3*3)
+matrix[9,:] = jpl['gJAVA'][candidates,0]
+
+head = 'NOTE if this is an "extended_candidates" list, gJAVA is in mag/arcsec^2\ntl   ra        dec      NBmag  rJAVA    z    line_lum   line_flux  brightNs   gJAVA'
+fmt_string = '%5d %3.5f %3.5f %6.2f %6.2f %6.3f %10.3e %10.3e %6.2f %10.2f'
 np.savetxt(setup['final_list'], matrix.T, fmt=fmt_string, header=head)
+
 
 matrix = np.empty( (2, len(jpl['coords'][candidates,0])) )   # RA-DEC of all candidates (excluding QSOs, galaxies, liners...)
 matrix[0,:] = jpl['coords'][candidates,0]
@@ -535,6 +540,7 @@ matrix[1,:] = jpl['coords'][candidates,1]
 head = 'ra        dec'
 fmt_string = '%3.5f %3.5f'
 np.savetxt(setup['final_radec'], matrix.T, fmt=fmt_string, header=head)
+
 
 matrix = np.empty( (2, len(jpl['coords'][over_SN,0])) )      # RA-DEC of candidates above Broad-Band S/N cuts
 matrix[0,:] = jpl['coords'][over_SN,0]
@@ -556,16 +562,3 @@ propVol = False
 tools.plot_JPLUS_results.plot_lumiFunc(fsky, line, propVol)
 
 #sys.exit()
-
-
-
-# FOR ALESSANDRO:
-# jpl_foot_mask = ((sdss_gal['coords'][:,0] > 126.25) & (sdss_gal['coords'][:,0] < 141.25) &\
-#                  (sdss_gal['coords'][:,1] > 51.) & (sdss_gal['coords'][:,1] < 60.))
-# sdss_for_ale = jplus.tools.select_object(sdss_gal, jpl_foot_mask)
-
-# dist_sg, ind_sg = xmatch(sdss_for_ale['coords'], gaia['coords'], max_distance=3./3600.)
-# mask_sg = (dist_sg != np.inf)
-# print 'xmatch: ', len(sdss_for_ale['coords'][mask_sg,0])
-# print 'gaia: ', len(gaia['coords'][:,0])
-# print 'sdss: ', len(sdss_for_ale['coords'][:,0])

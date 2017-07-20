@@ -33,7 +33,7 @@ def plot_colorMag_bytile(data_jpl, color, mask_selec=[], mask_tile=[], linea=[],
         plt.ylabel('['+str(filt[1])+'; '+str(filt[2])+'] - '+str(filt[0])+'   [mags]')
     elif setup['method'] == '2FM':
         plt.ylabel(str(filt[1])+' - '+str(filt[0])+'  [mags]')
-    plt.savefig(setup['plots']+'selection_color-mag/EDR/'+setup['method']+'_'+filt[0]+'_color-mag_tile'+str(tile_num)+'.pdf')
+    #plt.savefig(setup['plots']+'selection_color-mag/EDR/'+setup['method']+'_'+filt[0]+'_color-mag_tile'+str(tile_num)+'.pdf')
     #plt.savefig(setup['plots']+'selection_color-mag/EDR/'+setup['method']+'_'+filt[0]+'_color-mag_tile'+str(tile_num)+'.eps', format='eps', dpi=1000)
     plt.show()
     plt.close()

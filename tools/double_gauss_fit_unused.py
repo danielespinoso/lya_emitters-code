@@ -327,7 +327,7 @@ def evaluate_morphology(data, extent, mask_tile, tilenum):
 
     plt.plot(magbins, stdv_pb_1/amp_pb_1)
     plt.title('Tile: ' + str(int(tilenum)))
-    plt.savefig(setup['plots']+'stdev_over_amplitude_tile'+str(tilenum)+'.png')
+    #plt.savefig(setup['plots']+'stdev_over_amplitude_tile'+str(tilenum)+'.png')
     plt.close()
 
     f = plt.figure(figsize=(12,10))

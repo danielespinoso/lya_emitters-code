@@ -47,10 +47,12 @@ def plot_spec(lamb, x, errx, title, unt='mags', limits=[3400., 9000., 25.5, 16.5
     kol = (0.3,0.,0.)  #zJAVA
     ax.errorbar(lamb[11], x[11], yerr=errx[11], c=kol, fmt='s', ecolor=kol, alpha=0.7, label='zJAVA')
 
+    ax.plot(lamb, x, 'k-', alpha=0.3) #solid line to join points
+
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
-    limits=[3400., 9000., 25., 17.]
-    ax.axis(limits)
+    # limits=[3400., 9000., 25., 17.]
+    # ax.axis(limits)
     ax.set_title(title)
     ax.set_xlabel('wavelenght  [A]')
     if unt == 'mags':
@@ -59,11 +61,11 @@ def plot_spec(lamb, x, errx, title, unt='mags', limits=[3400., 9000., 25.5, 16.5
         ax.set_ylabel(setup['mag_type']+'_flux  [erg/s*cm2]')
     ax.legend(loc='center left', fontsize = 'small', bbox_to_anchor=(1, 0.5))
     #plt.savefig(setup['plots']+'spectra/spectrum_BPZobj'+str(idd+1)+'_BFtemplate_withANDnoNB.png')
-    plt.savefig(setup['plots']+'attempt.eps', format='eps', dpi=2000)
+    plt.savefig(setup['plots']+title+'.png')
     #plt.savefig(setup['plots']+'meetings/26-04-2016/qso'+str(idd)+'_flux.png')
     #plt.savefig(setup['plots']+setup['mag_type']+'_mags_'+setup['filters'][0]+'_('+setup['data_rels']+'_data)_'+title[:4]+'_candidates_composite.eps', format='eps', dpi=2000)
     #plt.savefig(setup['plots']+setup['mag_type']+'_mags_'+setup['filters'][0]+'_('+setup['data_rels']+'_data)_'+'compact_candidates_median.eps', format='eps', dpi=2000)
-    #plt.show()
+    plt.show()
     plt.close()
 
 
