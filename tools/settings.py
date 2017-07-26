@@ -64,7 +64,7 @@ def set_up():
     setup['sdssPhot'] = False       # if 'True' data_reader.py (called from select_emitters.py) x-matches jplus with sdss and substitutes sdss photometry to jplus' one
     setup['galexmask'] = True       # if 'True' only sources NOT in galex will be finally selecte
     setup['morph_sel'] = 'extd'     # set 'extd' or 'comp' to respectively select extended or compact sources during the final selection (workOn_emitters.py)
-    setup['data_rels'] = 'EDR'       # controls which JPLUS data release is used: 'T1' for ordinary DATA-ACCESS upad catalogue, 'EDR' for Early Data Release (subset of T1) or 'T2' for test-2 data
+    setup['data_rels'] = 'T2'       # controls which JPLUS data release is used: 'T1' for ordinary DATA-ACCESS upad catalogue, 'EDR' for Early Data Release (subset of T1) or 'T2' for test-2 data
     setup['save_firstSel'] = False  # if 'True' saves the "first_selection" catalogue (output of select_emitters.py) in the "lya_emitters/datasets" folder
         
 

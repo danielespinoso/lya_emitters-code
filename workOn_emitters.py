@@ -506,10 +506,19 @@ tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol=objects+
 
 
 
+#------------------------- CHECK BORDERS  -----------------------------#
+# for i in range(len(jpl['coords'][candidates,0])):
+#     print 'ra:',jpl['coords'][candidates,0][i],'dec:',jpl['coords'][candidates,1][i]
+#     print 'x:',jpl['xy_image'][candidates,0][i],'y:',jpl['xy_image'][candidates,1][i]
+
+# sys.exit()
+
+
 
 #--------------------------------  DATA SAVING  --------------------------------#
 all_final = jplus.tools.select_object(jpl, candidates)       # all candidates (excluding QSOs, galaxies, liners... see definition of "candidates" mask, above)
 final = jplus.tools.select_object(jpl, over_SN)              # same as above but including only candidates above Broad-Band S/N cuts
+
 
 #HDF5 catalogues
 dd.io.save(setup['final_catalog'], all_final)                # all candidates (excluding QSOs, galaxies, liners...)
