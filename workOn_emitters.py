@@ -13,8 +13,27 @@ sys.path.append(setup['jplus_code'])
 import jplus
 from jplus.tools import crossmatch_angular as xmatch
 
-
-
+#fit_name = setup['data']+'jplus/images/T3_tile00869/1000001-JPLUS-00869-t3_gSDSS_swp.fz'
+# root = setup['data']+'jplus/images/T2_tile5852_obj2419/'
+# zrpnts = [20.3829994, 23.6900005, 23.6800003]
+# root = setup['data']+'jplus/images/T2_tile5856_obj19567/'
+# zrpnts = [20.4790001, 23.7169991, 23.6580009]
+# root = setup['data']+'jplus/images/T2_tile5856_obj19567_zoom/'
+# zrpnts = [20.4790001, 23.7169991, 23.6580009]
+# root = setup['data']+'jplus/images/T2_tile5867_obj19245/'
+# zrpnts = [20.3589993, 23.6809998, 23.6450005]
+# root = setup['data']+'jplus/images/T2_tile5867_obj3993/'
+# zrpnts = [20.3589993, 23.6809998, 23.6450005]
+# root = setup['data']+'jplus/images/T2_tile9258_obj15382/'
+# zrpnts = [20.3689995, 23.6900005, 23.6359997]
+root = setup['data']+'jplus/images/T2_tile9258_obj15382_zoom/'
+zrpnts = [20.3689995, 23.6900005, 23.6359997]
+fits = []
+fits.append(root + str(setup['filters'][0]) + '.fits')
+fits.append(root + str(setup['filters'][1][0]) + 'SDSS.fits')
+fits.append(root + str(setup['filters'][2][0]) + 'SDSS.fits')
+tools.read_jplus_image(fits, zrpnts, root)
+sys.exit()
 
 #######################################################
 #
@@ -27,6 +46,7 @@ from jplus.tools import crossmatch_angular as xmatch
 jpl = dd.io.load(setup['jplus_candidates'])       # loads the list of candidates
 jpl['redshift'] = np.zeros(len(jpl['coords'][:,0]))
 #alljpl = dd.io.load(setup['jplus_input'])        # loads the initial jplus catalogue
+
 
 if setup['load_sdssGal'] == True:
     sdss_gal = dd.io.load(setup['sdss_gal'])      #load sdss galaxies catalogue
@@ -59,6 +79,7 @@ print '---------- GENERAL INFO ----------'
 print 'Filter: ', setup['filters'][0]
 print 'Mag type: '+setup['mag_type']+' mags'
 print 'Data release: '+setup['data_rels']
+print 'NB S/N cut: '+str(int(setup['SN']))
 print '\nList of loaded datasets:'
 if setup['load_sdssGal'] == True: print 'sdss galaxies'
 if setup['load_sdssQSO'] == True: print 'sdss quasars'
@@ -71,8 +92,8 @@ if setup['load_lqac'] == True: print 'lqac catalogue'
 
 print '\nInitial candidates: ', len(jpl['coords'][:,0])
 
-
-
+#tools.plot_footprint_and_data(jpl, data1=gaia, plot_jplus=False)
+#sys.exit()
 
 
 #-------------- BB SIGNAL-to-NOISE SELECTION  --------------#
@@ -382,6 +403,43 @@ else:
 #--------   BROWSE IMAGES   --------#
 # tools.browse_jplus_images(jpl)
 # sys.exit()
+#----------- SAVE DATA FOR GUILLAUME INTENSITY MAPPING -----------#
+# guill = {}
+# guill = {
+#     'coords':jpl['coords'][:],
+#     'object_id':jpl['object_id'][:],
+#     'tile_id':jpl['tile_id'][:],
+#     'xy_image':jpl['xy_image'][:],
+#     'cstar':jpl['cstar'][:],
+#     'uJAVA':jpl['uJAVA'][:],
+#     'J0378':jpl['J0378'][:],
+#     'J0395':jpl['J0395'][:],
+#     'J0410':jpl['J0410'][:],
+#     'J0430':jpl['J0430'][:],
+#     'gJAVA':jpl['gJAVA'][:],
+#     'J0515':jpl['J0515'][:],
+#     'rJAVA':jpl['rJAVA'][:],
+#     'J0660':jpl['J0660'][:],
+#     'iJAVA':jpl['iJAVA'][:],
+#     'J0861':jpl['J0861'][:],
+#     'zJAVA':jpl['zJAVA'][:],
+#     'fwhm':jpl['fwhm'][:],
+#     'KronRad':jpl['KronRad'][:],           
+#     'PetroRad':jpl['PetroRad'][:],
+#     'mag_auto_r':jpl['mag_auto_r'][:],
+#     'mu_max_r':jpl['mu_max_r'][:],
+#     'all_liners':jpl['all_liners'][:],
+#     'compact':jpl['compact'][:],
+#     'lqac_qso':jpl['lqac_qso'][:],
+#     'sdss_gal':jpl['sdss_gal'][:],
+#     'sdss_qso':jpl['sdss_qso'][:],
+#     'sdss_rightZ_qso':jpl['sdss_rightZ_qso'][:],
+#     'sdss_stars':jpl['sdss_stars'][:],
+#     'unsafe':jpl['unsafe'][:]
+# }
+# dd.io.save(setup['guillaume'], guill)       # all candidates (excluding QSOs, galaxies, liners...)
+
+
 
 
     
@@ -486,15 +544,34 @@ plt.close()
 # sys.exit()
 
 
+# #PLOT SDSS SPECTRUM
+objectid = 0
+sdss_spec = setup['spectra']+'spec-0355-51788-0118.csv'
+
+tools.plot_SDSSandJPLUS_spectra(sdss_spec, jpl, objectid, mask=jpl['sdss_rightZ_qso'], units='flux', zfromSDSS=False)
+
+#wave, flu = np.genfromtxt(spec, unpack=True, usecols=(0,1), delimiter=',', skip_header=1)
+
+#f=plt.figure(figsize=(12,10))
+#plt.plot(wave, flu, 'r-', linewidth=1, label='SDSS spectrum')
+#plt.xlabel(r'$\AA$', fontsize=14)
+#plt.ylabel(r'$\rm Flux\quad erg\,/\,(cm^2\,s\,\AA)$', fontsize=14)
+#plt.legend()
+#plt.show()
+#plt.close()
+#sys.exit()
 
 # #PLOT SINGLE SPECTRA
-#objectid = 6
-#tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, 14, mask=jpl['compact'], units='mags', zfromSDSS=False)
+#print jpl['coords'][candidates,0],jpl['coords'][candidates,1]
+#objectid = 0
+#tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, objectid, mask=jpl['sdss_rightZ_qso'], units='flux', zfromSDSS=False)
+sys.exit()
+
 
 # #PLOT MEDIAN SPECTRA ("""COMPOSITE""")
-mask_med_spec = jpl['compact']
-objects = 'comp'  # description string of the object-class that is going to be plotted
-tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol=objects+' median Photo-spec ('+setup['data_rels']+'_'+'SN'+str(int(setup['SN']))+'_data)')
+#mask_med_spec = jpl['sdss_rightZ_qso']
+#objects = 'SDSS z2.25 QSOs '  # description string of the object-class that is going to be plotted
+#tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol='median '+objects+'Photo-spectrum ('+setup['data_rels']+'_'+'SN'+str(int(setup['SN']))+'_data)')
 
 # candidates2 = ( (~jpl['in_galex']) & (~jpl['sdss_gal']) & (~jpl['sdss_qso']) & \
 #                (~jpl['sdss_rightZ_qso']) & (jpl['extended']) & (~jpl['all_liners']) &\
@@ -505,20 +582,33 @@ tools.plot_JPLUS_results.plot_MEDspectra(jpl, mask=mask_med_spec, titol=objects+
 # tools.plot_JPLUS_results.plot_MEDspectra_diff(jpl, mask1=mask_med_spec, mask2=mask_med_spec2, titol='Difference median Photo-spectrum')
 
 
+# #PLOT COMPOSITE SPECTRA (FLAG ORIENTED)
+# aa = 'compact'
+# tools.composite_spec(jpl, mask=jpl[aa], titol='composite   '+aa+'   ('+setup['data_rels']+'_data)')
 
-#------------------------- CHECK BORDERS  -----------------------------#
-# for i in range(len(jpl['coords'][candidates,0])):
-#     print 'ra:',jpl['coords'][candidates,0][i],'dec:',jpl['coords'][candidates,1][i]
-#     print 'x:',jpl['xy_image'][candidates,0][i],'y:',jpl['xy_image'][candidates,1][i]
+#sys.exit()
 
-# sys.exit()
+
+
+
+
+
+#--------------------------------  SAVING SDSS_rightZ_QSOs  --------------------------------#
+matrix = np.empty( (2, len(jpl['coords'][jpl['sdss_rightZ_qso'],0])) )   # only ra-dec, only z=2.25 quasars
+matrix[0,:] = jpl['coords'][jpl['sdss_rightZ_qso'],0]
+matrix[1,:] = jpl['coords'][jpl['sdss_rightZ_qso'],1]
+head = setup['data_rels']+' SN'+str(int(setup['SN']))+' SDSS_right-z_QSOs ra-dec list'
+fmt_string = '%3.5f %3.5f'
+np.savetxt(setup['results']+setup['filters'][0]+'_'+setup['data_rels']+'_SN'+str(int(setup['SN']))+'_sdssQSOs_rightZ_ra-dec.txt', matrix.T, fmt=fmt_string, header=head)
+sys.exit()
+
 
 
 
 #--------------------------------  DATA SAVING  --------------------------------#
 all_final = jplus.tools.select_object(jpl, candidates)       # all candidates (excluding QSOs, galaxies, liners... see definition of "candidates" mask, above)
 final = jplus.tools.select_object(jpl, over_SN)              # same as above but including only candidates above Broad-Band S/N cuts
-
+    
 
 #HDF5 catalogues
 dd.io.save(setup['final_catalog'], all_final)                # all candidates (excluding QSOs, galaxies, liners...)

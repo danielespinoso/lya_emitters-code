@@ -6,7 +6,8 @@ from tools.converters import magtoflux as MtF
 setup = tools.settings.set_up()
 
 
-# Computes MEDIAN alpha and beta coefficients for a given filter
+# Computes MEDIAN alpha and beta coefficients for a given filter set
+# nb = Narrow Band (filter)
 # bbc = Broad Band (filter) Contaminated (by the emission line)
 # bbuc = Broad Band (filter) Uncontaminated (by the emission line)
 def alphabeta(filset=setup['filters'], data_dir=setup['data']):

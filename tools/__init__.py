@@ -20,3 +20,7 @@ from .source_morphology import *
 from .linear_fit import *
 from .BrowseObjImages import *
 from .crossmatches import *
+from .cut_borders import *
+from .read_sdss_speck import *
+from .image_analyser import *
+

@@ -76,6 +76,7 @@ if (setup['tile_plot'] == True) or (setup['morpho_plot'] == True) or (setup['cst
 
     
 #--------  NARROW BAND EXCESS COMPUTATION  -------#
+uPrint('getting ready for tile-by-tile analysis... ', appendix='' )
 if (setup['method'] == '3FM'):
     fline, fcont, flux_nb, fcont_error = tools.threeFM.jplus3FM(jpl)
     mag_cont, mag_cont_error = FtoM(fcont, band=filt[0], dflux=fcont_error)
@@ -93,6 +94,11 @@ extdness = mumax - jpl['mag_auto_r'][:]
 jpl['extended'] = np.zeros(len(jpl['mu_max_r']), dtype=bool)
 jpl['compact'] = np.zeros(len(jpl['mu_max_r']), dtype=bool)
 
+    
+#-------  BORDERS COMPUTATION  ------#
+jpl['border'] = np.zeros(len(jpl['mu_max_r']), dtype=bool)
+jpl['safer'] = np.zeros(len(jpl['mu_max_r']), dtype=bool)
+uPrint('getting ready for tile-by-tile analysis... ', appendix='done' )
 
 
 
@@ -112,13 +118,14 @@ for i in set(jpl['tile_id']):
     # if (i != 5125):
     #     continue
 
-    
-    #maska = (first_jpl['xy_image'][:,0])
-    plt.hist(jpl['xy_image'][tilemask,0], bins=100, histtype='step')
-    plt.title('tile: '+str(i)+'  min_x: '+str(min(jpl['xy_image'][tilemask,0]))+'  max_x: '+str(max(jpl['xy_image'][tilemask,0])))
-    plt.show()
-    plt.close()
-    continue
+    #-----------  SELECT OBJECTS ON THE TILE BORDER  -----------#
+    minx = min(jpl['xy_image'][tilemask,0]) + setup['tile_bord']; maxx = max(jpl['xy_image'][tilemask,0]) - setup['tile_bord']
+    miny = min(jpl['xy_image'][tilemask,1]) + setup['tile_bord']; maxy = max(jpl['xy_image'][tilemask,1]) - setup['tile_bord']
+    borders = ((jpl['xy_image'][:,0] < minx) | (jpl['xy_image'][:,0] > maxx) | (jpl['xy_image'][:,1] < miny) | (jpl['xy_image'][:,1] > maxy))
+    border_mask = ((tilemask) & (borders))
+    safe_mask = ((tilemask) & (~borders))
+    jpl['border'] = ((jpl['border']) | (border_mask))
+    jpl['safer'] = ((jpl['safer']) | (safe_mask))
 
     #-----------  JPLUS SIGMA LINE  -----------#
     continuum = np.array([mag_cont[tilemask], mag_cont_error[tilemask]]).T
@@ -177,9 +184,32 @@ for i in set(jpl['tile_id']):
     cc += 1
     
 uPrint('working on jplus data tile by tile... ', appendix='done')
+
+
+
+#----------  MASKING THE BORDERS but KEEPING DOUBLED SOURCES  ----------#
+uPrint('excuding objects on tile borders... ', appendix='done')
+# we want to keep objects which are unsafe in a tile but safe in another tile
+# and discard objects which have no safe counterparts in other tiles
+bor = jplus.tools.select_object(jpl, jpl['border'])
+saf = jplus.tools.select_object(jpl, jpl['safer'])
+dis, ind = ang_xmatch(bor['coords'], saf['coords'], max_distance=3/3600.)
+barely_safe = (dis != np.inf)                        # unsafe objects with safe counterparts --> keep them
+
+dummy = jplus.tools.select_object(bor, barely_safe)
+dis, ind = ang_xmatch(jpl['coords'], dummy['coords'], max_distance=3/3600.)
+barely_safe = (dis != np.inf)                        # full-database-extended mask of barely safe objs
+jpl['unsafe'] = ((jpl['border']) & (~barely_safe))   # unsafe objs with no couterparts
+
+# tools.plot_footprint_and_data(jpl, plot_jplus=False)
+# plt.plot(jpl['coords'][:,0], jpl['coords'][:,1], 'og', markersize=3, alpha=0.2)
+# plt.plot(jpl['coords'][jpl['unsafe'],0], jpl['coords'][jpl['unsafe'],1], 'or', markersize=3, alpha=0.4)
+# plt.show()
+uPrint('excuding objects on tile borders... ', appendix='done')
+
+
+
 print 'final number of candidates: ', len(ra)
-
-
 
 if setup['save_firstSel'] == False:
     print 'The catalogue is not going to be saved!\n(to enable saving change "setup[save_firstSel]" to "True" in  tools/settings.py)\n\n'

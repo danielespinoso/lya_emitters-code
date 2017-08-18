@@ -1,0 +1,34 @@
+
+import os
+import sys
+import numpy as np
+import pyfits as pf
+import matplotlib.pyplot as plt
+
+import tools.settings
+setup = tools.settings.set_up()
+
+def read_jplus_image(inp_fit, filtr):
+    from tools.jplus_filter_system import jplus_pivot
+    data, header = pf.getdata(inp_fit,0,header=True)
+    #data.close()
+
+    # print header
+    # cp_nx = header['CRPIX1']   # number of central pixel in x dimension (ra dimension)
+    # cp_ra = header['CRVAL1']   # ra of central pixel in x dim
+    # cp_ny = header['CRPIX2']   # number of central pixel in y dim (dec dim)
+    # cp_dec = header['CRVAL2']  # dec of central pixel in y dim
+    # print cp_nx, cp_ra
+    # print cp_ny, cp_dec
+
+    zp = 23.6809998                   # zero_point from jplus_Tileimage
+    lpiv = jplus_pivot(band=filtr)    # in Angstrom
+    cc = 2.999e18                     # in Angstrom
+    flu = data*(10**(-0.4*(zp+48.6)) )*(cc/(lpiv**2.))
+
+    plt.figure(figsize=(12,10))
+    plt.imshow(np.log10(flu), cmap='Blues')
+    plt.colorbar()
+    plt.show()
+
+    sys.exit()
