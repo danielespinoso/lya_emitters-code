@@ -13,7 +13,16 @@ sys.path.append(setup['jplus_code'])
 import jplus
 from jplus.tools import crossmatch_angular as xmatch
 
-#fit_name = setup['data']+'jplus/images/T3_tile00869/1000001-JPLUS-00869-t3_gSDSS_swp.fz'
+
+#-------------- CONTINUUM SUBTRACTED IMAGES --------------#
+# fits = []
+
+# root = setup['data']+'jplus/images/T3_tile00869/1000001-JPLUS-00869-t3_'#gSDSS_swp.fz'
+# zrpnts = [19.9050007, 23.4759998, 23.5259991]
+# fits.append(root + str(setup['filters'][0]) + '_swp.fz')
+# fits.append(root + str(setup['filters'][1][0]) + 'SDSS_swp.fz')
+# fits.append(root + str(setup['filters'][2][0]) + 'SDSS_swp.fz')
+
 # root = setup['data']+'jplus/images/T2_tile5852_obj2419/'
 # zrpnts = [20.3829994, 23.6900005, 23.6800003]
 # root = setup['data']+'jplus/images/T2_tile5856_obj19567/'
@@ -26,14 +35,17 @@ from jplus.tools import crossmatch_angular as xmatch
 # zrpnts = [20.3589993, 23.6809998, 23.6450005]
 # root = setup['data']+'jplus/images/T2_tile9258_obj15382/'
 # zrpnts = [20.3689995, 23.6900005, 23.6359997]
-root = setup['data']+'jplus/images/T2_tile9258_obj15382_zoom/'
-zrpnts = [20.3689995, 23.6900005, 23.6359997]
-fits = []
-fits.append(root + str(setup['filters'][0]) + '.fits')
-fits.append(root + str(setup['filters'][1][0]) + 'SDSS.fits')
-fits.append(root + str(setup['filters'][2][0]) + 'SDSS.fits')
-tools.read_jplus_image(fits, zrpnts, root)
-sys.exit()
+# root = setup['data']+'jplus/images/T2_tile9258_obj15382_zoom/'
+# zrpnts = [20.3689995, 23.6900005, 23.6359997]
+# root = setup['data']+'jplus/images/T3_tile11370_obj39405/'
+# zrpnts = [20.2539997, 23.5139999, 23.5699997]
+# fits.append(root + str(setup['filters'][0]) + '.fits')
+# fits.append(root + str(setup['filters'][1][0]) + 'SDSS.fits')
+# fits.append(root + str(setup['filters'][2][0]) + 'SDSS.fits')
+
+# tools.read_jplus_image(fits, zrpnts, root)
+# sys.exit()
+
 
 #######################################################
 #
@@ -403,6 +415,9 @@ else:
 #--------   BROWSE IMAGES   --------#
 # tools.browse_jplus_images(jpl)
 # sys.exit()
+
+
+
 #----------- SAVE DATA FOR GUILLAUME INTENSITY MAPPING -----------#
 # guill = {}
 # guill = {
@@ -441,8 +456,14 @@ else:
 
 
 
+#--------   VVDS DATA (credits: Alvaro)   --------#
+import pickle
+vvds = pickle.load(open(setup['vvds']))
+# plt.plot(vvds['allspec'][0]['w'], vvds['allspec'][0]['flux'], 'k-')
+# plt.show()
+# plt.close()
 
-    
+
 #--------   GET THE QUASARS BY THEIR COLORS!   --------#
 print '\n\n'
 #add_mask = ((jpl['extended']) & (~jpl['sdss_qso']) )
@@ -497,14 +518,19 @@ if (setup['filters'][0] == 'J0378') or (setup['filters'][0] == 'J0395'):
             plt.text(i, 3.6, str(i), color=coul, fontweight='bold', fontsize=9)
             plt.text(2.7, i, 'Comp: '+str(complet)+  '   Pur: '+str(purit), color=coul, fontweight='bold', fontsize=9)
         plt.plot(xcol[~jpl['sdss_qso']], ycol[~jpl['sdss_qso']], 'ok', markersize=6, alpha=0.3, label='all NOT-SDSS-QSOs')  # ALL not-QSO sources
+
+vvds_xcol = vvds['photo_spec'][fx[0]][:,0] - vvds['photo_spec'][fx[1]][:,0]
+vvds_ycol = vvds['photo_spec'][fy[0]][:,0] - vvds['photo_spec'][fy[1]][:,0]
+plt.plot(vvds_xcol, vvds_ycol, 'og', markersize=6, alpha=0.6, label='VVDS LAEs')
         
 plt.plot(xcol[jpl['sdss_rightZ_qso']], ycol[jpl['sdss_rightZ_qso']], 'or', markersize=6, alpha=0.6, label='SDSS right_z QSOs')
 not_rightZ_qso = ((jpl['sdss_qso']) & (~jpl['sdss_rightZ_qso']))
 plt.plot(xcol[not_rightZ_qso], ycol[not_rightZ_qso], 'xk', markersize=6, alpha=0.98, label='SDSS "wrong"_z QSOs')
-if setup['morph_sel'] == 'extd':  plt.plot(xcol[ext_mask], ycol[ext_mask], 'ob', markersize=6, alpha=0.4, label='all extended candidates')
-if setup['morph_sel'] == 'comp':  plt.plot(xcol[com_mask], ycol[com_mask], 'ob', markersize=6, alpha=0.4, label='all compact candidates')
+if setup['morph_sel'] == 'extd':  plt.plot(xcol[ext_mask], ycol[ext_mask], 'ob', markersize=6, alpha=0.2, label='all extended candidates')
+if setup['morph_sel'] == 'comp':  plt.plot(xcol[com_mask], ycol[com_mask], 'ob', markersize=6, alpha=0.2, label='all compact candidates')
 #plt.plot(xcol[com_mask], ycol[com_mask], 'og', markersize=2, alpha=0.6, label='compact candidates')
 #plt.axis([-0.25, 1.50, -0.4, 2.2])
+
 plt.xlabel(fx[0]+' - '+fx[1]+'  [mags]', fontsize=16)
 plt.ylabel(fy[0]+' - '+fy[1]+'  [mags]', fontsize=16)
 plt.legend(fancybox=True, fontsize=12)
@@ -545,9 +571,8 @@ plt.close()
 
 
 # #PLOT SDSS SPECTRUM
-objectid = 0
-sdss_spec = setup['spectra']+'spec-0355-51788-0118.csv'
-
+objectid = 2
+sdss_spec = setup['spectra']+'spec-4447-55542-0346.fits'
 tools.plot_SDSSandJPLUS_spectra(sdss_spec, jpl, objectid, mask=jpl['sdss_rightZ_qso'], units='flux', zfromSDSS=False)
 
 #wave, flu = np.genfromtxt(spec, unpack=True, usecols=(0,1), delimiter=',', skip_header=1)
@@ -565,7 +590,7 @@ tools.plot_SDSSandJPLUS_spectra(sdss_spec, jpl, objectid, mask=jpl['sdss_rightZ_
 #print jpl['coords'][candidates,0],jpl['coords'][candidates,1]
 #objectid = 0
 #tools.plot_JPLUS_results.plot_JPLUSphotoSpectra(jpl, objectid, mask=jpl['sdss_rightZ_qso'], units='flux', zfromSDSS=False)
-sys.exit()
+#sys.exit()
 
 
 # #PLOT MEDIAN SPECTRA ("""COMPOSITE""")
@@ -594,13 +619,13 @@ sys.exit()
 
 
 #--------------------------------  SAVING SDSS_rightZ_QSOs  --------------------------------#
-matrix = np.empty( (2, len(jpl['coords'][jpl['sdss_rightZ_qso'],0])) )   # only ra-dec, only z=2.25 quasars
-matrix[0,:] = jpl['coords'][jpl['sdss_rightZ_qso'],0]
-matrix[1,:] = jpl['coords'][jpl['sdss_rightZ_qso'],1]
-head = setup['data_rels']+' SN'+str(int(setup['SN']))+' SDSS_right-z_QSOs ra-dec list'
-fmt_string = '%3.5f %3.5f'
-np.savetxt(setup['results']+setup['filters'][0]+'_'+setup['data_rels']+'_SN'+str(int(setup['SN']))+'_sdssQSOs_rightZ_ra-dec.txt', matrix.T, fmt=fmt_string, header=head)
-sys.exit()
+# matrix = np.empty( (2, len(jpl['coords'][jpl['sdss_rightZ_qso'],0])) )   # only ra-dec, only z=2.25 quasars
+# matrix[0,:] = jpl['coords'][jpl['sdss_rightZ_qso'],0]
+# matrix[1,:] = jpl['coords'][jpl['sdss_rightZ_qso'],1]
+# head = setup['data_rels']+' SN'+str(int(setup['SN']))+' SDSS_right-z_QSOs ra-dec list'
+# fmt_string = '%3.5f %3.5f'
+# np.savetxt(setup['results']+setup['filters'][0]+'_'+setup['data_rels']+'_SN'+str(int(setup['SN']))+'_sdssQSOs_rightZ_ra-dec.txt', matrix.T, fmt=fmt_string, header=head)
+# sys.exit()
 
 
 

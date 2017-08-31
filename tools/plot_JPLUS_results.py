@@ -350,8 +350,17 @@ def composite_spec(data, mask=[], titol=''):
 
 def plot_SDSSandJPLUS_spectra(sdss_file, first_data, first_objid, mask=[], units='mags', zsdss=0, zfromSDSS=False, number=0):
     # SDSS SPECTRUM
-    wave, flu = np.genfromtxt(sdss_file, unpack=True, usecols=(0,1), delimiter=',', skip_header=1)
-    flu = flu*0.55e-17   # should be 1.e-17
+    # wave, flu = np.genfromtxt(sdss_file, unpack=True, usecols=(0,1), delimiter=',', skip_header=1)
+
+    import pyfits as pf
+    data, header = pf.getdata(sdss_file, 0, header=True)
+    flu = np.empty(len(data))
+    wave = np.empty(len(data))
+    for i,j in zip(range(len(data)), data):
+        flu[i] = j[0]
+        wave[i] = 10**j[1]
+    
+    flu = flu*1.3e-17   # normalization to match jplus data. SDSS spectra are in units of 10^-17 erg/s/cm2/A
     
     f=plt.figure(figsize=(12,10))
     plt.plot(wave, flu, 'k-', linewidth=0.5, alpha=0.3, label='SDSS')
@@ -388,7 +397,7 @@ def plot_SDSSandJPLUS_spectra(sdss_file, first_data, first_objid, mask=[], units
     elif units == 'flux' :
         values = flux
         errors = errflux
-        lims = [3400., 9000., -0.4e-17, 5.e-16]
+        lims = [3400., 9000., -5.0e-17, 3.3e-16]
 
     titul = 'object: SDSS QSO     ra: '+str(ra)+'   dec: '+str(dec)+'     z: '+str(rsh)
         
@@ -431,6 +440,6 @@ def plot_SDSSandJPLUS_spectra(sdss_file, first_data, first_objid, mask=[], units
     plt.tick_params(axis='both', which='major', labelsize=14)
     plt.tick_params(axis='both', which='minor', labelsize=14)
     plt.legend(loc='upper right', fontsize = 'small')
-    plt.savefig(setup['plots']+'JPLUS_and_SDSS_spectra_inlegend.pdf')
+    plt.savefig(setup['plots']+'JPLUS_EDRobj-8461-19884_and_SDSS_spec-4447-55542-0346.pdf')
     #plt.show()
     plt.close()

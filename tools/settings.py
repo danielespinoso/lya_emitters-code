@@ -15,7 +15,8 @@ def set_up():
     #----------  FOLDERS  ----------#
     #-------------------------------#
     setup['home'] = os.path.expanduser('~')+'/'            # current home folder (automatic)
-    setup['here'] = setup['home'] + 'works/lya_emitters/'  # folder where 'select_emitters.py' is
+    setup['here'] = setup['home'] + 'works/lya_emitters/'  # folder where code/, results/, and the other folders are
+    setup['code'] = setup['here'] + 'code/'                # folder where 'select_emitters.py' and 'workOn_emitters.py' are
     setup['jplus_code'] = setup['home'] + 'j-plus/'        # folder where Raul's jplus pipeline is
     
     setup['plots'] = setup['here'] + 'results/plots/' # where plots will be saved
@@ -66,7 +67,7 @@ def set_up():
     setup['sdssPhot'] = False       # if 'True' data_reader.py (called from select_emitters.py) x-matches jplus with sdss and substitutes sdss photometry to jplus' one
     setup['galexmask'] = True       # if 'True' only sources NOT in galex will be finally selecte
     setup['morph_sel'] = 'comp'     # set 'extd' or 'comp' to respectively select extended or compact sources during the final selection (workOn_emitters.py)
-    setup['data_rels'] = 'T2'      # controls which JPLUS data release is used: 'T1' for ordinary DATA-ACCESS upad catalogue, 'EDR' for Early Data Release (subset of T1) or 'T2' for test-2 data
+    setup['data_rels'] = 'EDR'       # controls which JPLUS data release is used: 'T1' for ordinary upad catalogue, 'EDR' for Early Data Release (subset of T1), 'T2' or 'T3' for test-2 or test-3 data
     setup['save_firstSel'] = True  # if 'True' saves the "first_selection" catalogue (output of select_emitters.py) in the "lya_emitters/datasets" folder
         
 
@@ -84,6 +85,9 @@ def set_up():
         setup['jplus_candidates'] = setup['data']+'lyman_alpha/firstSelection_'+setup['filters'][0]+'_'+setup['mag_type']+'Mag_'+setup['method']+'_'+setup['data_rels']+'_SN'+str(int(setup['SN']))+'.h5'
     if setup['data_rels'] == '':
         setup['jplus_candidates'] = setup['data']+'lyman_alpha/firstSelection_'+setup['filters'][0]+'_'+setup['mag_type']+'Mag_'+setup['method']+setup['data_rels']+'_SN'+str(int(setup['SN']))+'.h5'
+
+    # JPLUS TILE_IMAGE INFO
+    setup['img_input'] = setup['data']+'jplus/jplus_tile_image_(03-05-2017).h5'
 
     
 
@@ -130,8 +134,8 @@ def set_up():
     # GALEX INPUT - as downloaded from CasJobs (I selected magnitude fields a bit "by chance")
     setup['galex_in'] = setup['data']+'galex/galex_photoObjs_autoMags.h5'
 
-    # TILE_IMAGE INFO INPUT
-    setup['img_input'] = setup['data']+'jplus/jplus_tile_image_(03-05-2017).h5'
+    # VVDS LAEs CATALOGUE (as produced by Alvaro Orsi)
+    setup['vvds'] = setup['data']+'vvds/lyalpha_spec.bin'
 
 
         
@@ -164,7 +168,7 @@ def set_up():
     setup['cstar_plot'] = False     # if 'True' activate CLASS_STAR plots (see select_emitters.py)
 
     setup['plot_mock'] = False      # if 'True' mock galaxies are plotted in color-color plot --> select_emitters.py
-    setup['plot_gaia'] = True      # if 'True' gaia stars are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py
+    setup['plot_gaia'] = False      # if 'True' gaia stars are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py
     setup['plot_sdssGal'] = False   # if 'True' sdss galaxies are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py
     setup['plot_sdssQSO'] = False   # if 'True' sdss quasars are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py
     setup['plot_sdssSTAR'] = False  # if 'True' sdss stars are plotted in 'tile_plots' (color-magnitude and color-color) --> select_emitters.py

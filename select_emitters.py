@@ -113,9 +113,7 @@ print '\nNumber of tiles to analyse: ', len(set(jpl['tile_id']))
 for i in set(jpl['tile_id']):
     uPrint('working on jplus data tile by tile... now: ',appendix=str(int(i)) )
     tilemask = (jpl['tile_id'] == i)
-    # if (cc > 0):
-    #     continue
-    # if (i != 5125):
+    # if (i != 11265):
     #     continue
 
     #-----------  SELECT OBJECTS ON THE TILE BORDER  -----------#

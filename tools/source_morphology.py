@@ -37,7 +37,7 @@ def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False,
     safe_box = ( (data['mag_auto_r'] > lims[0]) & (data['mag_auto_r'] < lims[1]) & \
                  (extent > hlims[0]) & (extent < hlims[1]) & (mask_tile) )
 
-    # TEST PLOT - BEFORE ALL OPERATIONS
+    # # TEST PLOT - BEFORE ALL OPERATIONS
     # plt.plot(data['mag_auto_r'][mask_tile], extent[mask_tile], 'og', alpha=0.15, markersize=2)
     # plt.plot(data['mag_auto_r'][safe_box], extent[safe_box], 'ob', alpha=0.6, markersize=2)
     # plt.show()
@@ -73,7 +73,7 @@ def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False,
     
     #-- ERROR FIT --#
     par = [0.1, 0.4, -10.]
-    if (tilenum == 10053) or (tilenum == 9859):
+    if (tilenum == 10053) or (tilenum == 9859) or (tilenum == 11365) or (tilenum == 11367) or (tilenum == 11371) or (tilenum == 10978):
         pars = [0.1, 0.4, -10.]
     else:
         pars, varmatr = curve_fit(magerr_fit, magbins, tot_err, p0=par)
@@ -150,7 +150,7 @@ def evaluate_morphology(data, extent, mask_tile, tilenum, plot_by_slice = False,
         
         plt.tight_layout()
         fold = 'CLASS_STAR_comparison_and_PROPER_morpho_criterion_(gauss_fit+error_fit+3_sigma_line)/'
-        #plt.savefig(setup['plots']+'morphology/mu_max/'+fold+'morpho-plot_tile'+str(tilenum)+'_cstar_errThreshold.png')
+        #plt.savefig(setup['plots']+'T3_morphoplots/'+'morpho-plot_tile'+str(tilenum)+'_cstar_errThreshold.png')
         #plt.savefig(setup['plots']+'morphology/mu_max/'+fold+'morpho-plot_tile'+str(tilenum)+'_cstar_errThreshold.eps', format='eps', dpi=1000)
         #plt.savefig(setup['plots']+'morphology/mu_max/'+fold+'morpho-plot_tile'+str(tilenum)+'_cstar_errThreshold.pdf')
         plt.show()

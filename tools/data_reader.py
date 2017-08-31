@@ -24,6 +24,7 @@ def jplus_reader(out_name):
         #----------------------------  (DOWN)LOADING JPLUS  ---------------------------#
         if setup['data_rels'] == 'T1' :  dab = 'upad'      #see Raul's jplus config.ini file
         if setup['data_rels'] == 'T2' :  dab = 'test2'     #see Raul's jplus config.ini file
+        if setup['data_rels'] == 'T3' :  dab = 'test3'     #see Raul's jplus config.ini file
         if setup['data_rels'] == 'EDR':  dab = 'edr'       #see Raul's jplus config.ini file
         jpl = fetch(db=dab, mag_type=setup['mag_type']+"Mags", mag_limit=[0,24], cstar_query=" ",\
                     object_name='allTOr24', overwrite=setup['jpl_overwr'], dualMode=True,\
